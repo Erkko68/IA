@@ -199,6 +199,18 @@ class GameState:
         if walls[x][y] == True: ...
         """
         return self.data.layout.walls
+    
+    def getWeights(self):
+        """
+        Returns a Grid of integer weight indicator variables.
+
+        Grids can be accessed via list notation, so to check
+        if there is a wall at (x,y), just call
+
+        weights = state.getWeights()
+        if walls[x][y] == 1: ...
+        """
+        return self.data.layout.weights
 
     def hasFood(self, x, y):
         return self.data.food[x][y]
@@ -211,13 +223,6 @@ class GameState:
 
     def isWin( self ):
         return self.data._win
-    
-    def getHeight(self, x, y):
-        # If height not specified, it has a "False" saved. Must return 1 in this case
-        if not self.data.layout.weights[x][y]:
-            return int(1)
-        
-        return int(self.data.layout.weights[x][y])
 
     #############################################
     #             Helper methods:               #

@@ -31,6 +31,7 @@ INFO_PANE_COLOR = formatColor(.4,.4,0)
 SCORE_COLOR = formatColor(.9, .9, .9)
 PACMAN_OUTLINE_WIDTH = 2
 PACMAN_CAPTURE_OUTLINE_WIDTH = 4
+WEIGHTS_COLOR = formatColor(0.0/255.0, 180.0/255.0, 255.0/255.0) # Blue-cyan
 
 GHOST_COLORS = []
 GHOST_COLORS.append(formatColor(.9,0,0)) # Red
@@ -206,6 +207,7 @@ class PacmanGraphics:
         self.drawWalls(layout.walls)
         self.food = self.drawFood(layout.food)
         self.capsules = self.drawCapsules(layout.capsules)
+        self.drawWeights(layout.weights) 
         refresh()
 
     def drawAgentObjects(self, state):
@@ -540,6 +542,25 @@ class PacmanGraphics:
                 else:
                     imageRow.append(None)
         return foodImages
+
+    def drawWeights(self, weightMatrix ):        
+        weightImages = []
+        for xNum, x in enumerate(weightMatrix):
+            imageRow = []
+            weightImages.append(imageRow)
+            for yNum, weight in enumerate(x):
+                if weight > 1: # weights different than default (1) are drawn
+                    screen = self.to_screen((xNum, yNum ))
+                    value = text(screen, 
+                                 WEIGHTS_COLOR, 
+                                 weight, #content to print
+                                 "Helvetica", 
+                                 10 #fontsize
+                                 )
+                    imageRow.append(value)
+                else:
+                    imageRow.append(None)
+        return weightImages
 
     def drawCapsules(self, capsules ):
         capsuleImages = {}

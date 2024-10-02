@@ -30,7 +30,7 @@ class Layout:
         self.height= len(layoutText)
         self.walls = Grid(self.width, self.height, False)
         self.food = Grid(self.width, self.height, False)
-        self.weights = Grid(self.width, self.height, False)  # Custom attribute 
+        self.weights = Grid(self.width, self.height, int(1))  # New attribute, 1 by default
         self.capsules = []
         self.agentPositions = []
         self.numGhosts = 0
@@ -38,7 +38,6 @@ class Layout:
         self.layoutText = layoutText
         self.totalFood = len(self.food.asList())
         # self.initializeVisibilityMatrix()
-        
 
     def getNumGhosts(self):
         return self.numGhosts
@@ -106,7 +105,7 @@ class Layout:
          o - Capsule
          G - Ghost
          P - Pacman
-         [2-9] - Elevation of the cell (weight), 1 by default
+         [2-9] - Cost of the cell (weight), 1 by default
         Other characters are ignored.
         """
         maxY = self.height - 1
@@ -129,11 +128,12 @@ class Layout:
         elif layoutChar in ['G']:
             self.agentPositions.append( (1, (x, y) ) )
             self.numGhosts += 1
+        #elif layoutChar in  ['1', '2', '3', '4']:
+        #    self.agentPositions.append( (int(layoutChar), (x,y)))
+        #    self.numGhosts += 1
         elif layoutChar in  ['2', '3', '4', '5', '6', '7', '8', '9']:
-            #self.agentPositions.append( (int(layoutChar), (x,y)))
-            #self.numGhosts += 1
             self.weights[x][y] = int(layoutChar)
-
+            
 def getLayout(name, back = 2):
     if name.endswith('.lay'):
         layout = tryToLoad('layouts/' + name)

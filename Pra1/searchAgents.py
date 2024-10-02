@@ -145,12 +145,13 @@ class PositionSearchProblem(search.SearchProblem):
 
     The state space consists of (x,y) positions in a pacman game.
 
-    This variation allows the assignment of weights to any (x,y) position, therefore it allows the path cost per action to be greater than 1.
-
     Note: this search problem is fully specified; you should NOT change it.
+    Note: in this new version the cost of transition to a cell by default is the weight 
+          of the cell (if specified in the layout). Otherwise, as in the previous version, the cost is always 1 by default
     """
 
-    def __init__(self, gameState, goal=(1,1), start=None, warn=True, visualize=True):
+    #def __init__(self, gameState, costFn = lambda x: 1, goal=(1,1), start=None, warn=True, visualize=True):
+    def __init__(self, gameState, costFn = None, goal=(1,1), start=None, warn=True, visualize=True):
         """
         Stores the start and goal.
 
@@ -159,10 +160,17 @@ class PositionSearchProblem(search.SearchProblem):
         goal: A position in the gameState
         """
         self.walls = gameState.getWalls()
+        self.weights = gameState.getWeights()
         self.startState = gameState.getPacmanPosition()
         if start != None: self.startState = start
         self.goal = goal
-        self.costFn = gameState.getHeight # Added
+
+        if costFn is None:
+            # Define lambda here where `self` is available
+            self.costFn = lambda pos: self.weights[pos[0]][pos[1]] # Default cost function
+        else:
+            self.costFn = costFn
+
         self.visualize = visualize
         if warn and (gameState.getNumFood() != 1 or not gameState.hasFood(*goal)):
             print('Warning: this does not look like a regular search maze')
@@ -188,7 +196,7 @@ class PositionSearchProblem(search.SearchProblem):
 
     def getSuccessors(self, state):
         """
-        Returns successor states, the actions they require, and the cost of the step.
+        Returns successor states, the actions they require, and a cost of 1.
 
          As noted in search.py:
              For a given state, this should return a list of triples,
@@ -205,7 +213,7 @@ class PositionSearchProblem(search.SearchProblem):
             nextx, nexty = int(x + dx), int(y + dy)
             if not self.walls[nextx][nexty]:
                 nextState = (nextx, nexty)
-                cost = self.costFn(nextx, nexty)
+                cost = self.costFn(nextState)
                 successors.append( ( nextState, action, cost) )
 
         # Bookkeeping for display purposes
@@ -229,12 +237,8 @@ class PositionSearchProblem(search.SearchProblem):
             dx, dy = Actions.directionToVector(action)
             x, y = int(x + dx), int(y + dy)
             if self.walls[x][y]: return 999999
-            cost += self.costFn(x,y)
+            cost += self.costFn((x,y))
         return cost
-    
-    # Added
-    def getTransitionCostToState(self, state):
-        return self.costFn(state[0], state[1])
 
 class StayEastSearchAgent(SearchAgent):
     """
@@ -350,6 +354,7 @@ class CornersProblem(search.SearchProblem):
         return len(actions)
 
 
+
 def cornersHeuristic(state: Any, problem: CornersProblem):
     """
     A heuristic for the CornersProblem that you defined.
@@ -361,13 +366,15 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
 
     This function should always return a number that is a lower bound on the
     shortest path from the state to a goal of the problem; i.e.  it should be
-    admissible (as well as consistent).
+    admissible.
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
     return 0 # Default to trivial solution
+
+
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -435,14 +442,9 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     """
     Your heuristic for the FoodSearchProblem goes here.
 
-    This heuristic must be consistent to ensure correctness.  First, try to come
-    up with an admissible heuristic; almost all admissible heuristics will be
-    consistent as well.
-
     If using A* ever finds a solution that is worse uniform cost search finds,
-    your heuristic is *not* consistent, and probably not admissible!  On the
-    other hand, inadmissible or inconsistent heuristics may find optimal
-    solutions, so be careful.
+    your search may have a but our your heuristic is not admissible!  On the
+    other hand, inadmissible heuristics may find optimal solutions, so be careful.
 
     The state is a tuple ( pacmanPosition, foodGrid ) where foodGrid is a Grid
     (see game.py) of either True or False. You can call foodGrid.asList() to get
@@ -462,6 +464,7 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
     return 0
+
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"

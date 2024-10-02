@@ -594,7 +594,8 @@ def pause():
     """
     Pauses the output stream awaiting user feedback.
     """
-    input("<Press enter/return to continue>")
+    print("<Press enter/return to continue>")
+    input()
 
 
 # code to handle timeouts

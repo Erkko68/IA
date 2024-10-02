@@ -18,6 +18,8 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
+from game import Directions
+from typing import List
 
 class SearchProblem:
     """
@@ -61,28 +63,66 @@ class SearchProblem:
         """
         util.raiseNotDefined()
 
-    def getTransitionCostToState(self, state):
-        """
-          state: Search state
-
-        For a given state (grid cell), this should return the height of the cell.
-        The height of a grid cell is equal to the cost of passing through it.
-        By default, passing through a grid cell has cost 1, but the user can assign any cost between [1-9] to each cell.
-        """
-        util.raiseNotDefined()
 
 
-def tinyMazeSearch(problem):
+
+def tinyMazeSearch(problem: SearchProblem) -> List[Directions]:
     """
     Returns a sequence of moves that solves tinyMaze.  For any other maze, the
     sequence of moves will be incorrect, so only use this for tinyMaze.
     """
-    from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
+    
+def _firstSearch(problem: SearchProblem, fringe):
+    """
+    Private function to execute a generic search algorithm.
 
-def depthFirstSearch(problem: SearchProblem):
+    Depending on the type of fringe list, this algorithm will act as:
+        - BFS: Queue (FIFO) - This approach explores all neighbors at the present depth prior to moving on to nodes at the next depth level.
+        - DFS: Stack (LIFO) - This approach explores as far as possible along each branch before backtracking.
+
+    The function starts from the initial state of the given problem and expands nodes using the specified fringe structure. 
+    It keeps track of expanded states to avoid processing the same state multiple times, ensuring efficiency.
+
+    Args:
+        problem (SearchProblem): The search problem to be solved, providing methods to get the start state, check goal state, and get successors.
+        fringe: A data structure (Queue or Stack) that determines the order of state exploration.
+
+    Returns:
+        list: A list of actions representing the path from the start state to the goal state if a solution is found; otherwise, returns an empty list.
+    """
+    expanded = set()  # Set to keep track of expanded
+
+    # Push the start state with and initialize an empty path
+    fringe.push((problem.getStartState(), []))
+
+    while not fringe.isEmpty():
+        # Get current state and its associated path
+        state, path = fringe.pop()
+
+        # Skip if current state is expanded
+        if state in expanded:
+            continue
+
+        # Add state to expanded set
+        expanded.add(state)
+
+        # Check if state is goal
+        if problem.isGoalState(state):
+            return path
+
+        # Explore the successors
+        for successor, action, _ in problem.getSuccessors(state):
+            if successor not in expanded:
+                # Add successors to the fringe list to proces them
+                fringe.push((successor, path + [action]))
+
+    return []  # If we reach here, no solution has been found, return an empty list
+
+
+def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
     """
     Search the deepest nodes in the search tree first.
 
@@ -95,32 +135,41 @@ def depthFirstSearch(problem: SearchProblem):
     print("Start:", problem.getStartState())
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
+
+
+    Important note: All of your search functions need to return a list of actions that will lead the agent from the start to the goal. 
+                    These actions all have to be legal moves (valid directions, no moving through walls).
+
+    Important note: Make sure to use the Stack, Queue and PriorityQueue data structures provided to you in util.py! 
+                    These data structure implementations have particular properties which are required for compatibility with the autograder.
+
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
-def breadthFirstSearch(problem: SearchProblem):
+    fringe = util.Stack() # FIFO
+    return _firstSearch(problem,fringe)
+    
+def breadthFirstSearch(problem: SearchProblem) -> List[Directions]:
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    fringe = util.Queue() # LIFO
+    return _firstSearch(problem,fringe)
 
-def uniformCostSearch(problem: SearchProblem):
+def uniformCostSearch(problem: SearchProblem) -> List[Directions]:
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
 
-def nullHeuristic(state, problem=None):
+def nullHeuristic(state, problem=None) -> float:
     """
     A heuristic function estimates the cost from the current state to the nearest
     goal in the provided SearchProblem.  This heuristic is trivial.
     """
     return 0
 
-def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
+def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic) -> List[Directions]:
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
-
 
 # Abbreviations
 bfs = breadthFirstSearch
