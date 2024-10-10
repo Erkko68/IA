@@ -63,9 +63,6 @@ class SearchProblem:
         """
         util.raiseNotDefined()
 
-
-
-
 def tinyMazeSearch(problem: SearchProblem) -> List[Directions]:
     """
     Returns a sequence of moves that solves tinyMaze.  For any other maze, the
@@ -75,51 +72,66 @@ def tinyMazeSearch(problem: SearchProblem) -> List[Directions]:
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
     
-def _firstSearch(problem: SearchProblem, fringe):
+def _search(problem: SearchProblem, fringe, cost=False) -> List[Directions]:
     """
-    Private function to execute a generic search algorithm.
+    Private function to execute a generic search algorithm with optimized goal state checking.
 
     Depending on the type of fringe list, this algorithm will act as:
-        - BFS: Queue (FIFO) - This approach explores all neighbors at the present depth prior to moving on to nodes at the next depth level.
-        - DFS: Stack (LIFO) - This approach explores as far as possible along each branch before backtracking.
-
-    The function starts from the initial state of the given problem and expands nodes using the specified fringe structure. 
-    It keeps track of expanded states to avoid processing the same state multiple times, ensuring efficiency.
+        - BFS: Queue (FIFO)
+        - DFS: Stack (LIFO)
+        - UCS: Priority Queue with total path cost as the priority
 
     Args:
-        problem (SearchProblem): The search problem to be solved, providing methods to get the start state, check goal state, and get successors.
-        fringe: A data structure (Queue or Stack) that determines the order of state exploration.
+        problem (SearchProblem): The search problem to be solved.
+        fringe: A data structure (Queue, Stack, or PriorityQueue) that determines the order of state exploration.
+        cost (bool): If True, the function considers the total path cost (used for UCS).
 
     Returns:
-        list: A list of actions representing the path from the start state to the goal state if a solution is found; otherwise, returns an empty list.
+        list: A list of actions representing the path from the start state to the goal state if a solution is found.
     """
-    expanded = set()  # Set to keep track of expanded
+    expanded = set()  # Set to track expanded states
 
-    # Push the start state with and initialize an empty path
-    fringe.push((problem.getStartState(), []))
+    # Push the start state with an empty path and 0 cost
+    if cost:
+        fringe.push((problem.getStartState(), [], 0), 0)  # (state, path, cost), with cost as priority
+    else:
+        fringe.push((problem.getStartState(), [], 0))  # (state, path, cost) without priority
 
     while not fringe.isEmpty():
-        # Get current state and its associated path
-        state, path = fringe.pop()
+        
+        # Pop the state with the lowest cost (or LIFO/FIFO depending on the fringe)
+        state, path, totalCost = fringe.pop()
 
-        # Skip if current state is expanded
+        # Used to prevent loops
         if state in expanded:
             continue
 
-        # Add state to expanded set
-        expanded.add(state)
-
-        # Check if state is goal
+        # Check if the successor is the goal state
         if problem.isGoalState(state):
             return path
 
-        # Explore the successors
-        for successor, action, _ in problem.getSuccessors(state):
-            if successor not in expanded:
-                # Add successors to the fringe list to proces them
-                fringe.push((successor, path + [action]))
+        # Add the state to the expanded set
+        expanded.add(state)
 
-    return []  # If we reach here, no solution has been found, return an empty list
+        # Explore successors
+        for successor, action, stepCost in problem.getSuccessors(state):
+
+            # Check if the successor is the goal state
+            #if problem.isGoalState(successor):
+            #    return path + [action]
+            
+            newCost = totalCost + stepCost
+
+            # Add successor if it hasn't been expanded
+            if successor not in expanded:
+                if cost:
+                    # Use total cost as the priority for UCS
+                    fringe.push((successor, path + [action], newCost), newCost)
+                else:
+                    # Regular push for DFS and BFS without using the cost
+                    fringe.push((successor, path + [action], newCost))
+
+    return []  # If no solution is found
 
 
 def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
@@ -145,19 +157,20 @@ def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
 
     """
     "*** YOUR CODE HERE ***"
-    fringe = util.Stack() # FIFO
-    return _firstSearch(problem,fringe)
+    fringe = util.Stack() # LIFO
+    return _search(problem,fringe)
     
 def breadthFirstSearch(problem: SearchProblem) -> List[Directions]:
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    fringe = util.Queue() # LIFO
-    return _firstSearch(problem,fringe)
+    fringe = util.Queue() # FIFO
+    return _search(problem,fringe)
 
 def uniformCostSearch(problem: SearchProblem) -> List[Directions]:
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    fringe = util.PriorityQueue()  # Priority queue for UCS
+    return _search(problem,fringe,True)
+
 
 def nullHeuristic(state, problem=None) -> float:
     """
