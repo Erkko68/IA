@@ -89,13 +89,12 @@ def _search(problem: SearchProblem, fringe) -> List[Directions]:
     """
     expanded = set()  # Set to track expanded states
 
-    # Push the start state with an empty path and 0 cost
-    fringe.push((problem.getStartState(), [], 0))  # (state, path, cost) without priority
+    # Push the start state with an empty path
+    fringe.push((problem.getStartState(), [], 0))  # (state, path, cost)
 
     while not fringe.isEmpty():
         
-        # Pop the state with the lowest cost (or LIFO/FIFO depending on the fringe)
-        state, path, totalCost = fringe.pop()
+        state, path, _ = fringe.pop()
 
         # Used to prevent loops
         if state in expanded:
@@ -106,18 +105,16 @@ def _search(problem: SearchProblem, fringe) -> List[Directions]:
             return path
 
         # Explore successors
-        for successor, action, stepCost in problem.getSuccessors(state):
+        for successor, action, _ in problem.getSuccessors(state):
 
             # Check if the successor is the goal state (Optimization)
             #if problem.isGoalState(successor):
             #    return path + [action]
-            
-            newCost = totalCost + stepCost
 
             # Add successor if it hasn't been expanded
             if successor not in expanded:
-                # Regular push for DFS and BFS without using the cost
-                fringe.push((successor, path + [action], newCost))
+                # Process sucecssors
+                fringe.push((successor, path + [action], _))
         
         # Add the state to the expanded set
         expanded.add(state)
