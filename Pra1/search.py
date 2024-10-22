@@ -72,19 +72,17 @@ def tinyMazeSearch(problem: SearchProblem) -> List[Directions]:
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
     
-def _search(problem: SearchProblem, fringe, cost=False) -> List[Directions]:
+def _search(problem: SearchProblem, fringe) -> List[Directions]:
     """
     Private function to execute a generic search algorithm with optimized goal state checking.
 
     Depending on the type of fringe list, this algorithm will act as:
         - BFS: Queue (FIFO)
         - DFS: Stack (LIFO)
-        - UCS: Priority Queue with total path cost as the priority
 
     Args:
         problem (SearchProblem): The search problem to be solved.
         fringe: A data structure (Queue, Stack, or PriorityQueue) that determines the order of state exploration.
-        cost (bool): If True, the function considers the total path cost (used for UCS).
 
     Returns:
         list: A list of actions representing the path from the start state to the goal state if a solution is found.
@@ -92,10 +90,7 @@ def _search(problem: SearchProblem, fringe, cost=False) -> List[Directions]:
     expanded = set()  # Set to track expanded states
 
     # Push the start state with an empty path and 0 cost
-    if cost:
-        fringe.push((problem.getStartState(), [], 0), 0)  # (state, path, cost), with cost as priority
-    else:
-        fringe.push((problem.getStartState(), [], 0))  # (state, path, cost) without priority
+    fringe.push((problem.getStartState(), [], 0))  # (state, path, cost) without priority
 
     while not fringe.isEmpty():
         
@@ -121,12 +116,8 @@ def _search(problem: SearchProblem, fringe, cost=False) -> List[Directions]:
 
             # Add successor if it hasn't been expanded
             if successor not in expanded:
-                if cost:
-                    # Use total cost as the priority for UCS
-                    fringe.push((successor, path + [action], newCost), newCost)
-                else:
-                    # Regular push for DFS and BFS without using the cost
-                    fringe.push((successor, path + [action], newCost))
+                # Regular push for DFS and BFS without using the cost
+                fringe.push((successor, path + [action], newCost))
         
         # Add the state to the expanded set
         expanded.add(state)
@@ -165,12 +156,6 @@ def breadthFirstSearch(problem: SearchProblem) -> List[Directions]:
     fringe = util.Queue() # FIFO
     return _search(problem,fringe)
 
-def uniformCostSearch(problem: SearchProblem) -> List[Directions]:
-    """Search the node of least total cost first."""
-    fringe = util.PriorityQueue()  # Priority queue for UCS
-    return _search(problem,fringe,True)
-
-
 def nullHeuristic(state, problem=None) -> float:
     """
     A heuristic function estimates the cost from the current state to the nearest
@@ -178,7 +163,10 @@ def nullHeuristic(state, problem=None) -> float:
     """
     return 0
 
-
+def uniformCostSearch(problem: SearchProblem) -> List[Directions]:
+    """Search the node of least total cost first."""
+    return aStarSearch(problem,nullHeuristic)
+    
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     """A* search following the given pseudocode with fringe and CLOSE lists."""
     
@@ -225,7 +213,6 @@ def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     
     # If no solution was found, return an empty list
     return []
-
 
 
 # Abbreviations

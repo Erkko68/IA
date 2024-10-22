@@ -280,6 +280,24 @@ def euclideanHeuristic(position, problem, info={}):
 # This portion is incomplete.  Time to write code!  #
 #####################################################
 
+def manhattanWithWalls(start, goal, walls):
+    """ Calculate Manhattan distance and add wall penalties """
+    distance = util.manhattanDistance(start, goal)
+    x1, y1 = start
+    x2, y2 = goal
+
+    wall_penalty = 0
+    # Check walls along the Manhattan path (horizontally and vertically)
+    for x in range(min(x1, x2), max(x1, x2) + 1):
+        if walls[x][y1]:  # Check horizontal line between start and goal
+            wall_penalty += 1
+    for y in range(min(y1, y2), max(y1, y2) + 1):
+        if walls[x1][y]:  # Check vertical line between start and goal
+            wall_penalty += 1
+    
+    # Increase the cost by a penalty for the walls encountered
+    return distance + wall_penalty
+
 class CornersProblem(search.SearchProblem):
     """
     This search problem finds paths through all four corners of a layout.
@@ -363,7 +381,6 @@ class CornersProblem(search.SearchProblem):
                 return 999999
         return len(actions)
 
-
 def cornersHeuristic(state: Any, problem: CornersProblem):
     """
     A heuristic for the CornersProblem that includes wall penalties based on Manhattan distance.
@@ -377,26 +394,8 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     currentPosition, visitedCorners = state
     unvisitedCorners = [corners[i] for i in range(4) if not visitedCorners[i]]
 
-    def manhattanWithWalls(start, goal):
-        """ Calculate Manhattan distance and add wall penalties """
-        distance = util.manhattanDistance(start, goal)
-        x1, y1 = start
-        x2, y2 = goal
-
-        wall_penalty = 0
-        # Check walls along the Manhattan path (horizontally and vertically)
-        for x in range(min(x1, x2), max(x1, x2) + 1):
-            if walls[x][y1]:  # Check horizontal line between start and goal
-                wall_penalty += 1
-        for y in range(min(y1, y2), max(y1, y2) + 1):
-            if walls[x1][y]:  # Check vertical line between start and goal
-                wall_penalty += 1
-        
-        # Increase the cost by a penalty for the walls encountered
-        return distance + wall_penalty
-
     # Use the modified distance function to calculate the cost to all unvisited corners
-    distances = [manhattanWithWalls(currentPosition, corner) for corner in unvisitedCorners]
+    distances = [manhattanWithWalls(currentPosition, corner, walls) for corner in unvisitedCorners]
 
     return max(distances) if distances else 0  # Return the largest distance
 
@@ -462,32 +461,53 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
 
-def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
+def foodHeuristic(state, problem):
     """
-    Your heuristic for the FoodSearchProblem goes here.
+    A heuristic function for the FoodSearchProblem.
+    This heuristic estimates the cost to eat all the remaining food (dots) on the grid.
+    
+    The heuristic uses the sum of Manhattan distances between the current position and
+    the closest food, and then iteratively computes the minimum sum of distances
+    between all unvisited foods in a greedy manner.
 
-    If using A* ever finds a solution that is worse uniform cost search finds,
-    your search may have a but our your heuristic is not admissible!  On the
-    other hand, inadmissible heuristics may find optimal solutions, so be careful.
-
-    The state is a tuple ( pacmanPosition, foodGrid ) where foodGrid is a Grid
-    (see game.py) of either True or False. You can call foodGrid.asList() to get
-    a list of food coordinates instead.
-
-    If you want access to info like walls, capsules, etc., you can query the
-    problem.  For example, problem.walls gives you a Grid of where the walls
-    are.
-
-    If you want to *store* information to be reused in other calls to the
-    heuristic, there is a dictionary called problem.heuristicInfo that you can
-    use. For example, if you only want to count the walls once and store that
-    value, try: problem.heuristicInfo['wallCount'] = problem.walls.count()
-    Subsequent calls to this heuristic can access
-    problem.heuristicInfo['wallCount']
+    Returns:
+    An estimate of the total cost to eat all remaining food.
     """
-    position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    currentPosition, foodGrid = state
+    unvisitedFoods = foodGrid.asList()  # List of all positions with food
+
+    # Base case: if there is no food left, return 0
+    if not unvisitedFoods:
+        return 0
+
+    # Calculate the distance to the nearest food from the current position
+    nearestFoodDistance = min(util.manhattanDistance(currentPosition, food) for food in unvisitedFoods)
+
+    # Initialize the total sum of minimum distances between foods
+    totalFoodDistance = 0
+    currentFood = unvisitedFoods[0]  # Start with the first food in the list
+
+    # While there is food remaining
+    while unvisitedFoods:
+        closestNextFood = unvisitedFoods[0]  # Initialize with a food from the list
+        minDistanceToNextFood = float('inf')  # Start with infinity for comparison
+
+        # Find the closest food to the current one
+        for food in unvisitedFoods:
+            distance = util.manhattanDistance(currentFood, food)
+            if distance < minDistanceToNextFood:
+                minDistanceToNextFood = distance
+                closestNextFood = food
+
+        # Update the current food and add the distance to the total
+        currentFood = closestNextFood
+        totalFoodDistance += minDistanceToNextFood
+
+        # Remove the closest food from the unvisited list
+        unvisitedFoods.remove(closestNextFood)
+
+    # The heuristic is the distance to the nearest food plus the total sum of distances between foods
+    return nearestFoodDistance + totalFoodDistance
 
 
 class ClosestDotSearchAgent(SearchAgent):
