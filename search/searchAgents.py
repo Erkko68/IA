@@ -489,7 +489,7 @@ def foodHeuristic(state, problem):
 
     # While there is food remaining
     while unvisitedFoods:
-        closestNextFood = unvisitedFoods[0]  # Initialize with a food from the list
+        closestNextFood = unvisitedFoods  # Initialize with a food from the list
         minDistanceToNextFood = float('inf')  # Start with infinity for comparison
 
         # Find the closest food to the current one
@@ -508,7 +508,6 @@ def foodHeuristic(state, problem):
 
     # The heuristic is the distance to the nearest food plus the total sum of distances between foods
     return nearestFoodDistance + totalFoodDistance
-
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
