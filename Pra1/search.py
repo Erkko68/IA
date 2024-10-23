@@ -103,6 +103,9 @@ def _search(problem: SearchProblem, fringe) -> List[Directions]:
         # Check if the successor is the goal state (Put here to bypass autoGrader)
         if problem.isGoalState(state):
             return path
+        
+        # Add the state to the expanded set
+        expanded.add(state)
 
         # Explore successors
         for successor, action, _ in problem.getSuccessors(state):
@@ -115,9 +118,6 @@ def _search(problem: SearchProblem, fringe) -> List[Directions]:
             if successor not in expanded:
                 # Process sucecssors
                 fringe.push((successor, path + [action], _))
-        
-        # Add the state to the expanded set
-        expanded.add(state)
 
     return []  # If no solution is found
 
