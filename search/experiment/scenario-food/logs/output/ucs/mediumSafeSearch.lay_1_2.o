@@ -1,0 +1,26 @@
+c ____OPTILOG_TASK____: /home/eric/Desktop/IA/search/layouts/mediumSafeSearch.lay
+c ____OPTILOG_SOLVER____: ucs
+c ____OPTILOG_SLOTS____: 1
+c ____OPTILOG_SEED____: 1
+c ____OPTILOG_CWD____: /home/eric/Desktop/IA/search/experiment
+c ____OPTILOG_CONSTRAINT_h_wall_time____: None
+c ____OPTILOG_CONSTRAINT_h_cpu_time____: None
+c ____OPTILOG_CONSTRAINT_h_virtual_memory____: None
+c ____OPTILOG_CONSTRAINT_h_real_memory____: None
+c ____OPTILOG_CONSTRAINT_s_wall_time____: None
+c ____OPTILOG_CONSTRAINT_s_cpu_time____: None
+c ____OPTILOG_CONSTRAINT_s_virtual_memory____: None
+c ____OPTILOG_CONSTRAINT_s_real_memory____: 1024
+c STARTING TIME 1729714002276 
+c OPTILOG SOLVER OBJ <optilog.blackbox.bb.SystemBlackBox object at 0x79886fa45160> 
+16.32/15.16	[SearchAgent] using function ucs
+16.32/15.16	[SearchAgent] using problem type FoodSearchProblem
+16.32/15.16	Path found with total cost of 75 in 14.9 seconds
+16.32/15.16	Search nodes expanded: 177351
+16.32/15.16	Pacman emerges victorious! Score: 795
+16.32/15.16	Average Score: 795.0
+16.32/15.16	Scores:        795.0
+16.32/15.16	Win Rate:      1/1 (1.00)
+16.32/15.16	Record:        Win
+
+c OPTILOG END 

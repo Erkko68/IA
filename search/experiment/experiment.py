@@ -5,8 +5,6 @@ from optilog.blackbox import ExecutionConstraints, RunSolver
 
 EXPERIMENT_DIR = pathlib.Path(__file__).parent.resolve()
 
-print(EXPERIMENT_DIR)
-
 experiments = [
     {
         "name": "search",
@@ -48,7 +46,7 @@ if __name__ == "__main__":
             tasks=str(experiment["tasks"].resolve()),
             submit_file=SUBMITTER,
             constraints=ExecutionConstraints(
-                s_wall_time=30, s_real_memory="1G", enforcer=RunSolver(RUNSOLVER)
+                s_real_memory="1G", enforcer=RunSolver(RUNSOLVER)
             ),
         )
         scenario_path = EXPERIMENT_DIR / f"scenario-{experiment['name']}"

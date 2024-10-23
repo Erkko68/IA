@@ -395,7 +395,7 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     unvisitedCorners = [corners[i] for i in range(4) if not visitedCorners[i]]
 
     # Use the manhattan with walls function to calculate the cost to all unvisited corners
-    distances = [manhattanWithWalls(currentPosition, corner, walls) for corner in unvisitedCorners]
+    distances = [manhattanWithWalls(currentPosition, corner,walls) for corner in unvisitedCorners]
 
     return max(distances) if distances else 0  # Return the largest distance
 
@@ -508,6 +508,33 @@ def foodHeuristic(state, problem):
 
     # The heuristic is the distance to the nearest food plus the total sum of distances between foods
     return nearestFoodDistance + totalFoodDistance
+
+"""
+def foodHeuristic(state, problem):
+    currentPosition, foodGrid = state
+    unvisitedFoods = foodGrid.asList()  # List of positions with food
+
+    # Base case: if there is no food left, return 0
+    if not unvisitedFoods:
+        return 0
+
+    # Step 1: Calculate Manhattan distance to the nearest food
+    nearestFoodDistance = min(util.manhattanDistance(currentPosition, food) for food in unvisitedFoods)
+
+    # Step 2: Calculate the Manhattan distance between the two farthest food items
+    if len(unvisitedFoods) > 1:
+        farthestFoodDistance = max(
+            util.manhattanDistance(food1, food2)
+            for i, food1 in enumerate(unvisitedFoods)
+            for food2 in unvisitedFoods[i+1:]
+        )
+    else:
+        farthestFoodDistance = 0  # If there's only one food, no extra distance needed
+
+    # Step 3: Return the sum of the nearest food distance and farthest food distance
+    return nearestFoodDistance + farthestFoodDistance
+
+"""
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
