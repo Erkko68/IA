@@ -192,6 +192,9 @@ def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
         if problem.isGoalState(currentState):
             return currentPath
         
+        # Add currentState to expanded list
+        expanded.add(currentState)
+        
         # Get successors
         for successor, action, step_cost in problem.getSuccessors(currentState):
             successorCost = currentCost + step_cost  # g(successor)
@@ -205,9 +208,6 @@ def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
                 
                 # Push the successor onto the fringe
                 fringe.push((successor, currentPath + [action], successorCost), fSuccessor)
-
-        # Add currentState to expanded list
-        expanded.add(currentState)
     
     # If no solution was found, return an empty list
     return []
