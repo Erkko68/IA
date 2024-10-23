@@ -394,7 +394,7 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     currentPosition, visitedCorners = state
     unvisitedCorners = [corners[i] for i in range(4) if not visitedCorners[i]]
 
-    # Use the modified distance function to calculate the cost to all unvisited corners
+    # Use the manhattan with walls function to calculate the cost to all unvisited corners
     distances = [manhattanWithWalls(currentPosition, corner, walls) for corner in unvisitedCorners]
 
     return max(distances) if distances else 0  # Return the largest distance
