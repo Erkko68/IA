@@ -1,0 +1,318 @@
+Metadata-Version: 2.1
+Name: optilog
+Version: 0.6.1
+Author: Logic and Optimization Group
+License: Logic Optimization Group Academic License Agreement
+                             Version 1, 18 September 2018
+        
+        Please read the terms and conditions of this license agreement carefully. By
+        installing the LOG Product(s) you are accepting the terms of this agreement.
+        The Effective Date of this Agreement is the date on which LOG Product(s) is
+        installed. The LOG Product(s) is copyrighted and licensed (not sold) to you
+        by Logic Optimization Group. This Agreement shall apply to all LOG Products,
+        unless replaced by LOG.
+        
+        
+        1- DEFINITIONS
+        
+        "LOG" is the Logic Optimization Group at University of Lleida.
+        
+        “Product(s)” is the OptiLog framework in machine-readable or source code form, 
+        including all Upgrades and published documentation.
+        
+        “You” or “your” means the single end-user customer organization accepting this
+        Agreement.
+        
+        
+        2- SCOPE OF RIGHTS
+        
+        In all cases, license Users and Uses are restricted to you. In particular, making
+        the Product(s) available over the Internet or similar networking technology to
+        others ("Hosting") is forbidden.
+        
+         2.1 - Grant of License.
+        
+        LOG grants you a non-exclusive right to use the Product(s) (including any Error
+        Corrections) for academic non-commercial use only, in machine-readable form and 
+        source code.
+        
+        This Product License specifically prohibits redistribution, transfer or resale
+        of the Product(s). You may make a reasonable number of copies of the Program in
+        machine-readable, object code form, and source code, for nonproductive backup 
+        purposes only.
+        
+         2.2 - Limitations on Use.
+        
+        You may not use, copy, modify, or distribute the Product(s), or make any copy,
+        adaptation, transcription, or merge any portion thereof, except as expressly
+        authorized by LOG in a separate written agreement signed by LOG. You may not
+        reverse assemble, reverse compile, otherwise translate, or reverse engineer the
+        Product(s). Your license may not be transferred, leased, assigned, or sub-licensed
+        without LOG’s prior written consent, which will not be unreasonably withheld. If
+        you copy or modify the Product(s) in any way not expressly authorized by LOG, your
+        license is automatically terminated.
+        
+        
+        3- MAINTENANCE AND SUPPORT
+        
+        Maintenance and support is not available for academic or educational license.
+        
+        
+        4 - LICENSE FEES
+        
+        The Product(s) is distributed free of charge for academic and educational use. Access for
+        commercial purposes is forbidden.
+        
+        
+        5 - WARRANTY
+        
+        Because the program is licensed free of charge, there is no warranty for the
+        program to the extent permitted by applicable law. The copyright holders provide
+        the program "AS IS" without warranty of any kind, either expressed or implied,
+        including, but not limited to, the implied warranties of merchantability and
+        fitness for a particular purpose. The entire risk as to the quality and
+        performance of the program is with you. Should the program prove defective, you
+        assume the cost of all necessary servicing, repair, or correction.
+        
+        In no event will any copyright holder, be liable to you for damages, including
+        any general, special, incidental or consequential damages arising out of the use
+        or inability to use the program (including but not limited to loss of data or
+        data being rendered inaccurate or losses sustained by you or third parties or a
+        failure of the program to operate with any other programs), even if such holder
+        or other party has been advised of the possibility of such damages.
+        
+        
+        6- OWNERSHIP
+        
+        LOG shall have sole right, title, and interest in and to the Product(s) and all
+        documentation relating to the Product(s) (including its development or its operation,
+        testing or use, and all reports and copies created), and all intellectual property
+        rights associated with the Product(s) (including, without limitation, rights to
+        copyrights, patents, trade secrets, and know-how). This Agreement does not provide
+        you with title or ownership of the Product(s), but only a right of limited use under
+        this license.
+        
+        7- RESTRICTIONS
+        
+        LOG reserves the right to revoke the above distribution right at any time, for any 
+        or no reason.
+        
+        8- EXTRA COMPLIANCE
+        
+        SatexBlackBox module depends on SAT Heritage and their Docker Images.
+        If you use that module, you must also comply with their license.
+        See: https://github.com/sat-heritage/docker-images for more information.
+Project-URL: Homepage, https://ulog.udl.cat/static/doc/optilog/html/index.html
+Project-URL: Documentation, https://ulog.udl.cat/static/doc/optilog/html/index.html
+Project-URL: Changelog, https://ulog.udl.cat/static/doc/optilog/html/optilog/changelog.html
+Project-URL: Logic and Optimization Group, https://ulog.udl.cat/
+Keywords: sat,maxsat,constraint,solver,problem
+Platform: Linux
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pypblib >=0.0.4
+Requires-Dist: pandas <2.2.2,>=1.1.5
+Requires-Dist: tabulate >=0.8.9
+Requires-Dist: sly ==0.4
+Requires-Dist: appdirs
+Requires-Dist: termcolor
+
+# OptiLog: A Framework for SAT-based Systems
+
+![](http://hardlog.udl.cat/static/doc/optilog/html/_images/OptiLog_Arch.png)
+
+OptiLog is a Python framework for rapid prototyping of SAT-based systems. OptiLog includes functionality for loading
+and creating formulas, state-of-the-art SAT solvers, high level formula modelling, pseudo boolean and cardinality
+encodings, automatic configuration and experiment running and parsing.
+
+OptiLog is designed to be simple and efficient. OptiLog can be used by field experts for tasks such as algorithm design,
+research and benchmarking, but it has also been successfully deployed in undergraduate Computational Logic courses.
+Moreover, OptiLog has been designed from the ground up to be modular and extensible through the abstract iSAT C++
+interface.
+
+## Installation
+
+OptiLog requires Python 3.8 to 3.11, and a Linux installation (currently supports x86_64).
+Wheels are distributed on PyPi.
+
+To install OptiLog run:
+
+```
+$ pip install optilog
+```
+
+## Why OptiLog
+
+OptiLog has a fully modular dynamic Python binding generator for SAT solvers. This means that integrating new SAT
+solvers into OptiLog is as simple as implementing a C++ interface, and doesn't require any Python C API knowledge.
+
+On top of that, OptiLog provides all the functionality required to develop and deploy complete SAT-based systems. We
+provide access to state-of-the-art automatic configuration tools to configure any kind of algorithm (not limited to SAT)
+as well as experiment-running and log-parsing modules.
+
+## Architecture
+
+The main architecture of OptiLog is composed of the five main modules of
+the [end-user OptiLog API](http://hardlog.udl.cat/static/doc/optilog/html/optilog/enduser.html#enduser-index) that
+supports the creation of SAT based systems and
+the [iSAT](http://hardlog.udl.cat/static/doc/optilog/html/optilog/solverdevel/isat.html#isat-interface) interface
+for [SAT solver developers](http://hardlog.udl.cat/static/doc/optilog/html/optilog/solverdeveloper.html#solverdevel-index).
+
+* The [Modelling](http://hardlog.udl.cat/static/doc/optilog/html/optilog/modelling.html#modelling-module) module:
+  The Modelling module provides a rich and compact formalism to model problems. In particular, this module allows
+  modelling problems with non-CNF Boolean and Pseudo Boolean expressions that can be automatically transformed into the
+  SAT formula provided by the Formulas module.
+
+* The [Formula](http://hardlog.udl.cat/static/doc/optilog/html/optilog/formula.html) module:
+  The Formulas module provides tools to load and manipulate SAT, MaxSAT, and QBF formulas.
+
+* The [Solvers](http://hardlog.udl.cat/static/doc/optilog/html/optilog/solvers/satsolver.html#solvers-module) module:
+  The Solvers module provides dynamic Python bindings for Python. It currently supports Solvers through
+  the [PyiSAT](http://hardlog.udl.cat/static/doc/optilog/html/optilog/solvers/satsolver.html?highlight=pyisat#pyisat-interface).
+  These SAT solvers implement
+  the [iSAT](http://hardlog.udl.cat/static/doc/optilog/html/optilog/solverdevel/isat.html#isat-interface) interface.
+
+* The [Encoders](http://hardlog.udl.cat/static/doc/optilog/html/optilog/encoders.html#encoders-module) module:
+  The Encoders module provides access to a set of encoders that can be used to translate constraints from one language
+  to another. This module is currently composed of encoders for Pseudo-Boolean and Cardinality constraints into SAT.
+
+* The [Tuning](http://ulog.udl.cat/static/doc/optilog/html/optilog/tuning.html#tuning-module) module:
+  The Tuning module provides support to automatically configure Python functions.
+
+* The [Running](http://hardlog.udl.cat/static/doc/optilog/html/optilog/running.html#running-module) module:
+  The Running module provides support to automatically generate execution scenarios that run experiments and collect
+  logs.
+
+* The [BlackBox](http://ulog.udl.cat/static/doc/optilog/html/optilog/blackbox.html) module:
+  The Blackbox module allows to encapsulate external applications into Python objects, which enables its interaction
+  with the other modules from Optilog such as the Running module or the Tuning module.
+
+## SAT solver Examples
+
+OptiLog deals with boolean variables represented by positive integers (DIMACS).
+
+Here is an example using the well known Glucose41:
+
+```
+>>> from optilog.sat import Glucose41
+>>> solver = Glucose41()
+>>> solver.add_clause([1, 3])
+>>> solver.add_clause([-1, -2])
+>>> solver.solve(assumptions=[1])
+True
+>>> solver.model()
+[1, -2, -3]
+```
+
+All SAT solvers are incremental, which means new clauses can be added after a solver has found a model:
+
+```
+>>> from optilog.sat import Glucose41
+>>> solver = Glucose41()
+>>> solver.add_clause([1, -2])
+>>> solver.solve(assumptions=[1, 2])
+True
+>>> solver.model()
+[1, 2]
+>>> solver.add_clause([-1, -2])
+>>> solver.solve(assumptions=[1, 2])
+False
+>>> solver.core()
+[1]
+```
+
+CNF and WCNF formulas can also be directly loaded in to the solver:
+
+```
+>>> from optilog.sat import Glucose41
+>>> solver = Glucose41()
+>>> solver.load_cnf('./path/to/file')
+```
+
+## Integrating a SAT solver
+
+Adding a new SAT solver to OptiLog is super easy. Just create a class that implements your desired method of the iSAT
+interface. Here you can see an example of the Cadical wrapper implementing the `addClause` and `solve` methods:
+
+```
+CadicalWrapper::CadicalWrapper()
+{
+    solver = new CaDiCaL::Solver;
+}
+
+CadicalWrapper::~CadicalWrapper()
+{
+    delete solver;
+}
+
+void CadicalWrapper::addClause(const std::vector<int>& literals)
+{
+    for (auto i = literals.begin(); i != literals.end(); ++i)
+    {
+        solver->add(*i);
+    }
+    solver->add(0);
+}
+
+E_STATE CadicalWrapper::solve(const std::vector<int>& assumptions)
+{
+    for (auto i = assumptions.begin(); i != assumptions.end(); ++i)
+    {
+        solver->assume(*i);
+    }
+    return (solver->solve() == 10 ? E_STATE::SAT : E_STATE::UNSAT);
+}
+
+OPTILOG_C_INTERFACE(CadicalWrapper, "Cadical")
+```
+
+Then, the solver is compiled as a shared library and integrated into OptiLog by copying the library on the
+`~/.optilog_solvers/` directory. Please
+check [the documentation](http://hardlog.udl.cat/static/doc/optilog/html/optilog/solverdevel/how-add-a-new-solver.html)
+for more details on how to integrate a SAT solver and add configurable parameters.
+
+[Documentation is available online](http://hardlog.udl.cat/static/doc/optilog/html/index.html)
+
+## License & Documentation
+
+OptiLog is free to use for academic use cases.
+
+SatexBlackBox module depends on [SAT Heritage](https://github.com/sat-heritage/docker-images) and their docker images.
+If you use that module, you must also comply with their license.
+
+For industrial use please contact the authors.
+
+For more information you can find the full license
+for OptiLog here: [License](http://hardlog.udl.cat/static/doc/optilog/html/optilog/license.html)
+
+## Cite
+
+```
+@InProceedings{alos_et_al:LIPIcs.SAT.2022.25,
+    author =	{Al\`{o}s, Josep and Ans\'{o}tegui, Carlos and Salvia, Josep M. and Torres, Eduard},
+    title =	{{OptiLog V2: Model, Solve, Tune and Run}},
+    booktitle =	{25th International Conference on Theory and Applications of Satisfiability Testing (SAT 2022)},
+    pages =	{25:1--25:16},
+    series =	{Leibniz International Proceedings in Informatics (LIPIcs)},
+    ISBN =	{978-3-95977-242-6},
+    ISSN =	{1868-8969},
+    year =	{2022},
+    volume =	{236},
+    editor =	{Meel, Kuldeep S. and Strichman, Ofer},
+    publisher =	{Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
+    address =	{Dagstuhl, Germany},
+    URL =		{https://drops.dagstuhl.de/opus/volltexte/2022/16699},
+    URN =		{urn:nbn:de:0030-drops-166996},
+    doi =		{10.4230/LIPIcs.SAT.2022.25},
+    annote =	{Keywords: Tool framework, Satisfiability, Modelling, Solving}
+}
+```
