@@ -166,29 +166,25 @@ def uniformCostSearch(problem: SearchProblem) -> List[Directions]:
     return aStarSearch(problem,nullHeuristic)
     
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
-    """A* search following the given pseudocode with fringe and CLOSE lists."""
-    
+
     # fringe is a priority queue, storing nodes with their priority (f = g + h)
     fringe = util.PriorityQueue()
     
-    # expanded is a set of nodes that have already been expanded
     expanded = set()
     
     # Use a dictionary to keep track of the best cost found so far for each node
     g = {}
     
-    # Initial node (startState) and its cost
+    # Get initial node (startState) and its cost
     startState = problem.getStartState()
     g[startState] = 0  # g(startState) = 0
     hStart = heuristic(startState, problem)
     fringe.push((startState, [], 0), hStart)  # f(startState) = h(startState)
     
-    # Main loop of the algorithm
     while not fringe.isEmpty():
         # Pop the node with the lowest f(n) = g(n) + h(n)
         currentState, currentPath, currentCost = fringe.pop()
         
-        # If node_current is goal state, return the solution
         if problem.isGoalState(currentState):
             return currentPath
         
@@ -200,7 +196,6 @@ def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
             successorCost = currentCost + step_cost  # g(successor)
 
             # If this path to successor is better, update the path
-            # Only keep track of the best path so far (in the dictionary)
             if successor not in g or successorCost < g[successor]:
                 g[successor] = successorCost
                 hSuccessor = heuristic(successor, problem)
