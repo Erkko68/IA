@@ -1,0 +1,15 @@
+Per utilitzar els polygons solament ens interessa el centroide del polygon.
+ho podem fer amb cadaster["centroid"] = cadaster.geometry.centroid
+ Despres hem de convertir el codi postal amb el mateix format
+
+Filtrem els edificis que tinguin codi postal i de tipus residencial on el edifici estigui funcional (no en ruines).
+
+Podem agrupar per codi postal, buildarea i household (nombre de vivendes)
+
+
+Les dades del clima les agruparem per data i codi postal, i assignarem la temperatura mitja, humitat mitja, elevació solar 
+(si hi ha valors negatius ho podem passar a 0), ghi, etc
+
+
+No podem associar el consum quan realitzem el decision tree amb el train_test_split, tindriam que tenir el consum del dia anterior (lack) amb metodes shift,
+pero ho podem deixar sense el consum.
