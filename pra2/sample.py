@@ -1,4 +1,4 @@
-from utils import *
+from src.clustering.utils import *
 import pandas as pd
 import polars as pl
 import geopandas as gpd
@@ -15,7 +15,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.compose import ColumnTransformer
 import graphviz
 
-from utils import evaluate_regression_model
+from src.clustering.utils import evaluate_regression_model
 
 warnings.filterwarnings("ignore")
 os.makedirs("plots", exist_ok=True)
