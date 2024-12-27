@@ -2,8 +2,7 @@ import warnings
 import numpy as np
 import polars as pl
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.cluster import AgglomerativeClustering
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, MaxAbsScaler, PowerTransformer
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sklearn.manifold import TSNE
@@ -12,10 +11,9 @@ from utils import *
 import matplotlib.pyplot as plt
 import os
 
-PLOT_DIR = "../../plots"
-
-# Suppress warnings for cleaner output
 warnings.filterwarnings("ignore")
+
+PLOT_DIR = "../../plots"
 
 # ================================
 # 1. Load and Preprocess Data
@@ -68,15 +66,17 @@ consumption = consumption.with_columns(
     pl.when(
         (pl.col("z_norm") < MAX_Z_THRESHOLD) &
         (pl.col("z_norm") > MIN_Z_THRESHOLD) &
-        (pl.col("consumption") > (pl.col("rolling_q10") * 0.7))
+        (pl.col("consumption") > (pl.col("rolling_q10") * 0.8))
     ).then(pl.col("consumption")).otherwise(np.nan).alias("consumption_filtered")
 )
+
+consumption.write_parquet("../../data/consumption_filtered.parquet")
 
 # ================================
 # 4. Prepare Data for Clustering
 # ================================
 # Define aggregation window (hours)
-N_HOURS = 1
+N_HOURS = 3
 
 # Compute intraday consumption percentages
 consumption_long = consumption.join(
@@ -98,12 +98,16 @@ consumption_wide = consumption_long.sort(["postalcode", "hour", "date"]).select(
 ]).pivot(index=["postalcode", "date"], columns="hour", values="consumption_percentage").to_pandas()
 consumption_wide.set_index(["postalcode", "date"], inplace=True)
 
+# Create a copy of the DataFrame before saving
+consumption_wide_copy = consumption_wide.copy()
+# Save the copy as a Parquet file
+consumption_wide_copy.to_parquet("../../data/consumption_wide.parquet")
+
 # ================================
 # 5. Apply Scaling
 # ================================
 # Scale the data using different methods
 scalers = {
-    "NoScaling": consumption_wide,
     "MinMaxScaling": pd.DataFrame(
         MinMaxScaler().fit_transform(consumption_wide),
         columns=consumption_wide.columns,
@@ -113,88 +117,36 @@ scalers = {
         StandardScaler().fit_transform(consumption_wide),
         columns=consumption_wide.columns,
         index=consumption_wide.index
+    ),
+    # Using robust scaling gives no major diferences (this means the data doesn't have much outliners)
+    #"RobustScaling": pd.DataFrame(
+    #    RobustScaler().fit_transform(consumption_wide),
+    #    columns=consumption_wide.columns,
+    #    index=consumption_wide.index
+    #),
+    #
+    # The same result as MinMaxScaling
+    #"MaxAbsScaling": pd.DataFrame(
+    #    MaxAbsScaler().fit_transform(consumption_wide),
+    #    columns=consumption_wide.columns,
+    #    index=consumption_wide.index
+    #),
+    "PowerTransformerScaling": pd.DataFrame(
+        PowerTransformer(method="yeo-johnson").fit_transform(consumption_wide),
+        columns=consumption_wide.columns,
+        index=consumption_wide.index
     )
 }
 
 
 # ================================
-# 6. Perform Agglomerative Clustering
-# ================================
-
-os.makedirs(PLOT_DIR, exist_ok=True)
-
-# Range of cluster numbers to evaluate
-CLUSTER_RANGE = range(2, 10)
-
-for scaling_type, scaled_data in scalers.items():
-    os.makedirs(f"{PLOT_DIR}/agglomerative/{scaling_type}",exist_ok=True)
-    silhouette_scores = []
-    clustering_data = scaled_data.dropna()
-    clustering_index = clustering_data.index.to_frame(index=False)
-    clustering_data.reset_index(drop=True, inplace=True)
-
-    for n_clusters in CLUSTER_RANGE:
-        print(f"Agglomerative Clustering ({scaling_type}) with {n_clusters} clusters")
-        
-        # Perform hierarchical clustering
-        clustering_model = AgglomerativeClustering(n_clusters=n_clusters, linkage="ward", compute_distances=True)
-        cluster_labels = clustering_model.fit_predict(clustering_data)
-
-        # Calculate silhouette score
-        silhouette_avg = silhouette_score(clustering_data, cluster_labels)
-        silhouette_scores.append(silhouette_avg)
-
-        # Plot dendrogram
-        plt.figure(figsize=(15, 8))
-        plt.title(f"Dendrogram ({scaling_type}, {n_clusters} clusters)")
-        plot_dendrogram(clustering_model, truncate_mode="lastp", p=n_clusters)
-        plt.xlabel("Data Points")
-        plt.ylabel("Distance")
-        plt.savefig(f"{PLOT_DIR}/agglomerative/{scaling_type}/dendrogram_{n_clusters}.png", dpi=300)
-
-        # Plot daily load curves with centroids
-        plot_daily_load_curves_with_centroids_to_png(
-            df=(consumption.select(pl.all().exclude("cluster"))
-                .join(
-                    consumption.group_by(["postalcode", "date"]).agg(
-                        (pl.col("consumption_filtered").mean() * 24).alias("daily_consumption")
-                    ),
-                    on=["postalcode", "date"]
-                ).with_columns(
-                    (pl.col("consumption_filtered") * 100 / pl.col("daily_consumption")).alias("consumption_filtered")
-                ).join(
-                    pl.DataFrame(
-                        pd.concat([
-                            clustering_index.reset_index(drop=True),
-                            pd.DataFrame(cluster_labels, columns=["cluster"])
-                        ], axis=1)
-                    ).with_columns(pl.col("date").cast(pl.Date)),
-                    on=["postalcode", "date"]
-                )
-            ),
-            png_path=f"{PLOT_DIR}/agglomerative/{scaling_type}/load_curves_{n_clusters}.png",
-            add_in_title=scaling_type
-        )
-
-    # Plot silhouette scores
-    plt.figure(figsize=(10, 5))
-    plt.plot(CLUSTER_RANGE, silhouette_scores, marker="o")
-    plt.xlabel("Number of Clusters")
-    plt.ylabel("Silhouette Score")
-    plt.title(f"Silhouette Analysis ({scaling_type})")
-    plt.savefig(f"{PLOT_DIR}/agglomerative/{scaling_type}/silhouette.png", dpi=300)
-
-
-
-# ================================
-# 7. Perform K-Means Clustering with t-SNE Validation
+# 6. Perform K-Means Clustering with t-SNE Validation
 # ================================
 # Range of cluster numbers to evaluate
-CLUSTER_RANGE = range(2, 10)
+CLUSTER_RANGE = range(2, 8)
 
 for scaling_type, scaled_data in scalers.items():
-
-    os.makedirs(f"{PLOT_DIR}/kmeans/{scaling_type}",exist_ok=True)
+    os.makedirs(f"{PLOT_DIR}/kmeans/{scaling_type}", exist_ok=True)
     silhouette_scores = []
     clustering_data = scaled_data.dropna()
     clustering_index = clustering_data.index.to_frame(index=False)
@@ -204,7 +156,8 @@ for scaling_type, scaled_data in scalers.items():
         print(f"K-Means Clustering ({scaling_type}) with {n_clusters} clusters")
         
         # Perform K-Means clustering
-        clustering_model = KMeans(n_clusters=n_clusters, init='k-means++', max_iter=300, random_state=42)
+        # Increased maximum itterations and n_init (starting positions) gives a better fit for clusters of 3-4
+        clustering_model = KMeans(n_clusters=n_clusters, init='k-means++', algorithm = "lloyd" ,max_iter=300, n_init = 25, random_state=42)
         cluster_labels = clustering_model.fit_predict(clustering_data)
 
         # Calculate silhouette score
@@ -237,7 +190,7 @@ for scaling_type, scaled_data in scalers.items():
 
         # Perform t-SNE for validation
         print(f"Performing t-SNE Visualization ({scaling_type}) for {n_clusters} clusters")
-        tsne = TSNE(n_components=2, random_state=42, perplexity=30, n_iter=1000)
+        tsne = TSNE(n_components=2, random_state=42, perplexity=40, max_iter=2000)
         tsne_results = tsne.fit_transform(clustering_data)
 
         # Create a DataFrame for t-SNE results
