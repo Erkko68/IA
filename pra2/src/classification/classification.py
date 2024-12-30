@@ -115,7 +115,7 @@ scalers = {
 }
 
 # Select the scaling type
-selected_scaling = "RobustScaling"
+selected_scaling = "ZNormScaling"
 
 # ================================
 # 6. Perform Clustering
@@ -123,7 +123,7 @@ selected_scaling = "RobustScaling"
 # Initialize KMeans clustering algorithm
 print(f"Performing clustering with KMeans using {selected_scaling}")
 clustering_algorithm = KMeans(
-    n_clusters=4, init='k-means++', algorithm="lloyd", max_iter=300, n_init=25, random_state=42
+    n_clusters=3, init='k-means++', algorithm="lloyd", max_iter=300, n_init=25, random_state=42
 )
 
 # Prepare data for clustering
@@ -262,6 +262,34 @@ plt.ylabel("Actual Cluster")
 plt.tight_layout()
 
 plt.savefig(f"confusion_matrix_{selected_scaling}.png", dpi=300, bbox_inches="tight")
+
+# =====================
+# 12. Feature Importances
+# =====================
+
+# Get feature importances from the trained model
+feature_importances = best_rf_model.feature_importances_
+
+# Create a DataFrame for easier manipulation and visualization
+feature_df = pd.DataFrame({
+    'Feature': X_train.columns,
+    'Importance': feature_importances
+})
+
+# Sort the features by importance in descending order
+feature_df = feature_df.sort_values(by='Importance', ascending=False)
+
+# Plot the feature importances
+plt.figure(figsize=(10, 6))
+sns.barplot(x='Importance', y='Feature', data=feature_df, palette='viridis')
+plt.title('Feature Importances - Random Forest')
+plt.xlabel('Importance')
+plt.ylabel('Feature')
+plt.tight_layout()
+
+# Save the plot
+plt.savefig(f"feature_importances_{selected_scaling}.png", dpi=300, bbox_inches="tight")
+
 
 '''
 # ================================
