@@ -61,6 +61,9 @@ consumption = pl.concat([
 MAX_Z_THRESHOLD = 4
 MIN_Z_THRESHOLD = -2
 
+# Filter rows with 0 consumption (preventing one extra cluster just for 0 consumption patterns)
+consumption = consumption.filter(pl.col("consumption") > 30.0)
+
 # Filter consumption data based on Z-normalization and rolling quantile thresholds
 consumption = consumption.with_columns(
     pl.when(
@@ -119,18 +122,18 @@ scalers = {
         index=consumption_wide.index
     ),
     # Using robust scaling gives no major diferences (this means the data doesn't have much outliners)
-    #"RobustScaling": pd.DataFrame(
-    #    RobustScaler().fit_transform(consumption_wide),
-    #    columns=consumption_wide.columns,
-    #    index=consumption_wide.index
-    #),
+    "RobustScaling": pd.DataFrame(
+        RobustScaler().fit_transform(consumption_wide),
+        columns=consumption_wide.columns,
+        index=consumption_wide.index
+    ),
     #
     # The same result as MinMaxScaling
-    #"MaxAbsScaling": pd.DataFrame(
-    #    MaxAbsScaler().fit_transform(consumption_wide),
-    #    columns=consumption_wide.columns,
-    #    index=consumption_wide.index
-    #),
+    "MaxAbsScaling": pd.DataFrame(
+        MaxAbsScaler().fit_transform(consumption_wide),
+        columns=consumption_wide.columns,
+        index=consumption_wide.index
+    ),
     "PowerTransformerScaling": pd.DataFrame(
         PowerTransformer(method="yeo-johnson").fit_transform(consumption_wide),
         columns=consumption_wide.columns,
@@ -157,7 +160,7 @@ for scaling_type, scaled_data in scalers.items():
         
         # Perform K-Means clustering
         # Increased maximum itterations and n_init (starting positions) gives a better fit for clusters of 3-4
-        clustering_model = KMeans(n_clusters=n_clusters, init='k-means++', algorithm = "lloyd" ,max_iter=300, n_init = 25, random_state=42)
+        clustering_model = KMeans(n_clusters=n_clusters, init='k-means++', algorithm = "lloyd" ,max_iter=300, n_init = 15, random_state=42)
         cluster_labels = clustering_model.fit_predict(clustering_data)
 
         # Calculate silhouette score

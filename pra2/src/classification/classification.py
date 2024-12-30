@@ -1,18 +1,19 @@
 # ================================
 # 1. Import Necessary Libraries
 # ================================
-import os
 import warnings
 import pandas as pd
 import polars as pl
 import geopandas as gpd
-import numpy as np
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, OneHotEncoder, PowerTransformer
+from sklearn.preprocessing import RobustScaler, StandardScaler
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score, accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import train_test_split
-from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import plot_tree
+from sklearn.model_selection import GridSearchCV
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Suppress warnings for clean output
 warnings.filterwarnings("ignore")
@@ -78,43 +79,8 @@ cadaster = cadaster[~pd.isna(cadaster.postalcode) &
 cadaster = pl.DataFrame(
     cadaster.groupby("postalcode")[["builtarea", "households"]].sum().reset_index())
 
-
 # ================================
-# 5. Apply Scaling
-# ================================
-# Apply Yeo-Johnson PowerTransformer for scaling
-consumption_wide_znorm = pd.DataFrame(
-    PowerTransformer(method="yeo-johnson").fit_transform(consumption_wide),
-    columns=consumption_wide.columns,
-    index=consumption_wide.index
-)
-
-# ================================
-# 6. Perform Clustering
-# ================================
-
-# Initialize KMeans clustering algorithm
-
-print("Performing clustering with KMeans")
-clustering_algorithm = KMeans(n_clusters=5, init='k-means++', algorithm="lloyd", max_iter=300, n_init=25, random_state=42)
-
-# Prepare data for clustering
-clustering_X = consumption_wide_znorm.dropna(axis=0)
-index_X = clustering_X.index.to_frame(index=False)
-clustering_X = clustering_X.reset_index(drop=True)
-
-# Perform clustering
-cl_results = clustering_algorithm.fit_predict(clustering_X)
-
-# Combine clustering results with postalcode and date information
-clustering_results = (pl.concat([
-        pl.DataFrame(index_X),
-        pl.DataFrame({"cluster": cl_results})],
-        how="horizontal").
-    with_columns(pl.col("date").cast(pl.Date)))
-
-# ================================
-# 7. Aggregate Weather Data to Daily
+# 4. Adjust weather data
 # ================================
 weather_daily = (weather
     .with_columns(
@@ -132,7 +98,51 @@ weather_daily = (weather
 )
 
 # ================================
-# 8. Prepare Daily Consumption Data
+# 5. Apply Scaling
+# ================================
+# Define scaling methods
+scalers = {
+    "ZNormScaling": pd.DataFrame(
+        StandardScaler().fit_transform(consumption_wide),
+        columns=consumption_wide.columns,
+        index=consumption_wide.index
+    ),
+    "RobustScaling": pd.DataFrame(
+        RobustScaler().fit_transform(consumption_wide),
+        columns=consumption_wide.columns,
+        index=consumption_wide.index
+    )
+}
+
+# Select the scaling type
+selected_scaling = "RobustScaling"
+
+# ================================
+# 6. Perform Clustering
+# ================================
+# Initialize KMeans clustering algorithm
+print(f"Performing clustering with KMeans using {selected_scaling}")
+clustering_algorithm = KMeans(
+    n_clusters=4, init='k-means++', algorithm="lloyd", max_iter=300, n_init=25, random_state=42
+)
+
+# Prepare data for clustering
+clustering_X = scalers[selected_scaling].dropna(axis=0)
+index_X = clustering_X.index.to_frame(index=False)
+clustering_X = clustering_X.reset_index(drop=True)
+
+# Perform clustering
+cl_results = clustering_algorithm.fit_predict(clustering_X)
+
+# Combine clustering results with postal code and date information
+clustering_results = (pl.concat([
+        pl.DataFrame(index_X),
+        pl.DataFrame({"cluster": cl_results})],
+        how="horizontal").
+    with_columns(pl.col("date").cast(pl.Date)))
+
+# ================================
+# 7. Prepare Daily Consumption Data
 # ================================
 # Aggregate daily consumption data and include clustering results
 consumption_daily = (consumption
@@ -142,7 +152,7 @@ consumption_daily = (consumption
     .join(clustering_results, on=["postalcode", "date"]))
 
 # ================================
-# 9. Prepare Data for Classification Model
+# 8. Prepare Data for Classification Model
 # ================================
 # Merge consumption, socioeconomic, cadaster, and weather data
 all_data_daily = (consumption_daily
@@ -157,29 +167,26 @@ all_data_daily = (consumption_daily
     .to_pandas())
 
 # ================================
-# 10. Train Classification Model
+# 9. Train Classification Model
 # ================================
 # Split the dataset into features (X) and target (y)
 X_train, X_test, y_train, y_test = train_test_split(
-    all_data_daily.drop(["date", "postalcode", "cluster", "consumption"], axis=1),
+    all_data_daily.drop(["postalcode", "date", "cluster", "consumption"], axis=1),
     all_data_daily.cluster,
     random_state=42,
     test_size=0.2
 )
 
-from sklearn.model_selection import GridSearchCV
-
 # Define the parameter grid for Random Forest
-param_grid = {'n_estimators': [200, 400, 500, 600, 800], 'max_depth': [5, 10, 20, 30]}
+param_grid = {'n_estimators': [200, 400, 500, 600, 800], 'max_depth': [5, 10, 20, 30, 40]}
 
 # Perform GridSearchCV to find the best parameters
-
 print("Performing GridSearch")
 
 grid_search = GridSearchCV(
     RandomForestClassifier(),
     param_grid,
-    cv=5,
+    cv=5,       # Cross validation
     n_jobs=-1,  # Use all available CPU cores
     verbose=1
 )
@@ -204,9 +211,9 @@ y_pred = best_rf_model.predict(X_test)
 test_accuracy = accuracy_score(y_test, y_pred)
 print(f"Model Testing Accuracy: {round(test_accuracy * 100, 2)}%")
 
-import seaborn as sns
-import matplotlib.pyplot as plt
-
+# ================================
+# 10. Visualize Grid Search Results
+# ================================
 # Extract results from grid search
 results = pd.DataFrame(grid_search.cv_results_)
 
@@ -226,7 +233,55 @@ sns.heatmap(
     cbar_kws={'label': 'Mean Test Accuracy'},
     fmt=".3f"
 )
-plt.title("Grid Search Results (Mean Test Accuracy)")
+plt.title(f"Grid Search Results (Mean Test Accuracy) - {selected_scaling}")
 plt.xlabel("Number of Estimators")
 plt.ylabel("Max Depth")
-plt.show()
+plt.savefig(f"grid_search_results_{selected_scaling}.png", dpi=300, bbox_inches="tight")
+
+# =====================
+# 11. Confusion Matrix
+# =====================
+
+# Here we want to visaulize the relation between number of samples with the training, 
+# and see if the accuracy is directly proportional to the number of data points, while
+# also checking wich clusters fail more to predict.
+
+# Get cluster counts from actual and predicted
+actual_cluster_counts = y_test.value_counts().sort_index()
+predicted_cluster_counts = pd.Series(y_pred).value_counts().sort_index()
+
+# Compute confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+
+# Plot heatmap
+plt.figure(figsize=(10, 8))
+sns.heatmap(cm, annot=True, fmt='d', cmap="Blues", xticklabels=actual_cluster_counts.index, yticklabels=actual_cluster_counts.index)
+plt.title(f"{selected_scaling} - Confusion Matrix Heatmap")
+plt.xlabel("Predicted Cluster")
+plt.ylabel("Actual Cluster")
+plt.tight_layout()
+
+plt.savefig(f"confusion_matrix_{selected_scaling}.png", dpi=300, bbox_inches="tight")
+
+'''
+# ================================
+# 12. Plot an Individual Tree
+# ================================
+import matplotlib.pyplot as plt
+from sklearn.tree import plot_tree
+
+# Get the best tree (you can adjust the index or apply custom criteria)
+best_tree = best_rf_model.estimators_[0]
+
+# Plot the tree using matplotlib
+plt.figure(figsize=(20, 10))
+plot_tree(best_tree, 
+          filled=True, 
+          feature_names=X_train.columns,  # Use feature names
+          class_names=list(map(str, best_rf_model.classes_)),  # Class names
+          rounded=True, 
+          proportion=True)
+
+# Save the plot as an HTML file (using static plotting)
+plt.savefig("best_tree.png", format="svg")
+'''
