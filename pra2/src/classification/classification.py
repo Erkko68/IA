@@ -5,13 +5,14 @@ import warnings
 import pandas as pd
 import polars as pl
 import geopandas as gpd
-from sklearn.preprocessing import RobustScaler, StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.cluster import KMeans
 from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import plot_tree
 from sklearn.model_selection import GridSearchCV
+from sklearn.manifold import TSNE
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -107,15 +108,15 @@ scalers = {
         columns=consumption_wide.columns,
         index=consumption_wide.index
     ),
-    "RobustScaling": pd.DataFrame(
-        RobustScaler().fit_transform(consumption_wide),
+    "MinMaxScaling": pd.DataFrame(
+        MinMaxScaler().fit_transform(consumption_wide),
         columns=consumption_wide.columns,
         index=consumption_wide.index
-    )
+    ),
 }
 
 # Select the scaling type
-selected_scaling = "ZNormScaling"
+selected_scaling = "MinMaxScaling"
 
 # ================================
 # 6. Perform Clustering
@@ -290,10 +291,61 @@ plt.tight_layout()
 # Save the plot
 plt.savefig(f"feature_importances_{selected_scaling}.png", dpi=300, bbox_inches="tight")
 
+# ================================
+# 13. t-SNE Visualization with Misclassified Points for All Data
+# ================================
+# Combine X_train and X_test
+X_all = pd.concat([X_train, X_test], axis=0)
+
+# Perform t-SNE on the entire dataset (X_all)
+X_tsne_all = TSNE(n_components=2, random_state=42).fit_transform(X_all)
+
+# Create a DataFrame for the t-SNE results of the combined dataset
+tsne_df_all = pd.DataFrame(X_tsne_all, columns=["tsne1", "tsne2"])
+
+# Combine y_train and y_test for actual clusters
+y_all_actual = pd.concat([y_train, y_test], axis=0)
+
+# Combine predictions for both train and test sets
+y_all_pred = pd.concat([pd.Series(y_train_pred), pd.Series(y_pred)], axis=0)
+
+# Reset indices for both tsne_df_all and y_all_pred to avoid misalignment
+tsne_df_all.reset_index(drop=True, inplace=True)
+y_all_pred.reset_index(drop=True, inplace=True)
+y_all_actual.reset_index(drop=True, inplace=True)
+
+# Add predicted cluster and actual cluster labels
+tsne_df_all['predicted_cluster'] = y_all_pred
+tsne_df_all['actual_cluster'] = y_all_actual
+
+# Mark the misclassified points
+tsne_df_all['misclassified'] = tsne_df_all['actual_cluster'] != tsne_df_all['predicted_cluster']
+
+# Plotting the t-SNE visualization with clusters and misclassified points
+plt.figure(figsize=(10, 8))
+sns.scatterplot(
+    data=tsne_df_all, 
+    x='tsne1', 
+    y='tsne2', 
+    hue='predicted_cluster', 
+    style='misclassified', 
+    palette='Set1', 
+    markers={True: 'X', False: 'o'},  # Correct marker style for misclassified points
+    legend='full', 
+    s=100
+)
+plt.title(f'{selected_scaling} - t-SNE Visualization with Misclassified Points (All Data)')
+plt.xlabel('t-SNE Component 1')
+plt.ylabel('t-SNE Component 2')
+plt.tight_layout()
+
+# Save the plot
+plt.savefig(f"{selected_scaling}_tsne_misclassified_points_all.png", dpi=300, bbox_inches="tight")
+
 
 '''
 # ================================
-# 12. Plot an Individual Tree
+# 14. Plot an Individual Tree
 # ================================
 import matplotlib.pyplot as plt
 from sklearn.tree import plot_tree
