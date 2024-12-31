@@ -2,25 +2,28 @@
 # 1. Import Necessary Libraries
 # ================================
 import warnings
+import os
+
+import geopandas as gpd
+import matplotlib.pyplot as plt
 import pandas as pd
 import polars as pl
-import geopandas as gpd
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.cluster import KMeans
-from sklearn.metrics import accuracy_score, confusion_matrix
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import plot_tree
-from sklearn.model_selection import GridSearchCV
-from sklearn.manifold import TSNE
 import seaborn as sns
-import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.manifold import TSNE
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
 
 # Suppress warnings for clean output
 warnings.filterwarnings("ignore")
 
 # Define working directory for data
 DATA_DIR = "../../data"
+PLOT_DIR = "../../plots"
+os.makedirs(f"{PLOT_DIR}/RandomForestClassifier/",exist_ok=True)
 
 # ================================
 # 2. Load Datasets
@@ -53,6 +56,8 @@ cadaster["centroid"] = cadaster.geometry.centroid
 # Reproject postal codes to the same CRS as cadaster data
 postalcodes = postalcodes.to_crs(cadaster.crs)
 
+postalcodes.to_file(f"{DATA_DIR}/processed_postal_codes.gpkg", driver="GPKG")
+
 # Perform spatial join to match postal codes with cadaster
 cadaster = gpd.sjoin(
     cadaster,  # GeoDataFrame with building centroids
@@ -79,6 +84,8 @@ cadaster = cadaster[~pd.isna(cadaster.postalcode) &
 # Aggregate cadaster data by postal code
 cadaster = pl.DataFrame(
     cadaster.groupby("postalcode")[["builtarea", "households"]].sum().reset_index())
+
+cadaster.to_pandas().to_parquet(f"{DATA_DIR}/cadaster_processed.parquet")
 
 # ================================
 # 4. Adjust weather data
@@ -113,10 +120,16 @@ scalers = {
         columns=consumption_wide.columns,
         index=consumption_wide.index
     ),
+    # Set num cluster to 4
+    "RobustScaling": pd.DataFrame(
+        RobustScaler().fit_transform(consumption_wide),
+        columns=consumption_wide.columns,
+        index=consumption_wide.index
+    ),
 }
 
 # Select the scaling type
-selected_scaling = "MinMaxScaling"
+selected_scaling = "RobustScaling"
 
 # ================================
 # 6. Perform Clustering
@@ -124,7 +137,7 @@ selected_scaling = "MinMaxScaling"
 # Initialize KMeans clustering algorithm
 print(f"Performing clustering with KMeans using {selected_scaling}")
 clustering_algorithm = KMeans(
-    n_clusters=3, init='k-means++', algorithm="lloyd", max_iter=300, n_init=25, random_state=42
+    n_clusters=4, init='k-means++', algorithm="lloyd", max_iter=300, n_init=25, random_state=42
 )
 
 # Prepare data for clustering
@@ -237,15 +250,15 @@ sns.heatmap(
 plt.title(f"Grid Search Results (Mean Test Accuracy) - {selected_scaling}")
 plt.xlabel("Number of Estimators")
 plt.ylabel("Max Depth")
-plt.savefig(f"grid_search_results_{selected_scaling}.png", dpi=300, bbox_inches="tight")
+plt.savefig(f"{PLOT_DIR}/RandomForestClassifier/grid_search_results_{selected_scaling}.png", dpi=300, bbox_inches="tight")
 
 # =====================
 # 11. Confusion Matrix
 # =====================
 
-# Here we want to visaulize the relation between number of samples with the training, 
+# Here we want to visualize the relation between number of samples with the training,
 # and see if the accuracy is directly proportional to the number of data points, while
-# also checking wich clusters fail more to predict.
+# also checking which clusters fail more to predict.
 
 # Get cluster counts from actual and predicted
 actual_cluster_counts = y_test.value_counts().sort_index()
@@ -262,13 +275,13 @@ plt.xlabel("Predicted Cluster")
 plt.ylabel("Actual Cluster")
 plt.tight_layout()
 
-plt.savefig(f"confusion_matrix_{selected_scaling}.png", dpi=300, bbox_inches="tight")
+plt.savefig(f"{PLOT_DIR}/RandomForestClassifier/confusion_matrix_{selected_scaling}.png", dpi=300, bbox_inches="tight")
 
 # =====================
-# 12. Feature Importances
+# 12. Feature Importance's
 # =====================
 
-# Get feature importances from the trained model
+# Get feature importance's from the trained model
 feature_importances = best_rf_model.feature_importances_
 
 # Create a DataFrame for easier manipulation and visualization
@@ -289,7 +302,7 @@ plt.ylabel('Feature')
 plt.tight_layout()
 
 # Save the plot
-plt.savefig(f"feature_importances_{selected_scaling}.png", dpi=300, bbox_inches="tight")
+plt.savefig(f"{PLOT_DIR}/RandomForestClassifier/feature_importances_{selected_scaling}.png", dpi=300, bbox_inches="tight")
 
 # ================================
 # 13. t-SNE Visualization with Misclassified Points for All Data
@@ -340,7 +353,7 @@ plt.ylabel('t-SNE Component 2')
 plt.tight_layout()
 
 # Save the plot
-plt.savefig(f"{selected_scaling}_tsne_misclassified_points_all.png", dpi=300, bbox_inches="tight")
+plt.savefig(f"{PLOT_DIR}/RandomForestClassifier/{selected_scaling}_tsne_misclassified_points_all.png", dpi=300, bbox_inches="tight")
 
 
 '''
@@ -363,5 +376,5 @@ plot_tree(best_tree,
           proportion=True)
 
 # Save the plot as an HTML file (using static plotting)
-plt.savefig("best_tree.png", format="svg")
+plt.savefig("{PLOT_DIR}/RandomForestClassifier/best_tree.png", format="svg")
 '''

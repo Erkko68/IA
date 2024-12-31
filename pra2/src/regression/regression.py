@@ -2,19 +2,30 @@
 # 1. Import Necessary Libraries
 # ================================
 import warnings
-import pandas as pd
-import polars as pl
-import geopandas as gpd
-from sklearn.preprocessing import RobustScaler, StandardScaler
-from sklearn.cluster import KMeans
-from sklearn.metrics import accuracy_score, confusion_matrix
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import plot_tree
-from sklearn.model_selection import GridSearchCV
-import seaborn as sns
-import matplotlib.pyplot as plt
+import os
 
+import geopandas as gpd
+from sklearn.compose import ColumnTransformer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.tree import DecisionTreeRegressor
+
+from utils import *
+
+# Suppress warnings for clean output
+warnings.filterwarnings("ignore")
+
+# Define working directory for data
+DATA_DIR = "../../data"
+PLOT_DIR = "../../plots"
+os.makedirs(f"{PLOT_DIR}/RandomForestRegressor/",exist_ok=True)
+
+consumption = pl.read_parquet(f"{DATA_DIR}/consumption_filtered.parquet")
+weather = pl.read_parquet(f"{DATA_DIR}/weather.parquet")
+cadaster = pl.read_parquet(f"{DATA_DIR}/cadaster_processed.parquet")
+socioeconomic = pl.read_parquet(f"{DATA_DIR}/socioeconomic.parquet")
+postalcodes = gpd.read_file(f"{DATA_DIR}/processed_postal_codes.gpkg")
+postalcodes = postalcodes.to_crs(cadaster.crs)
 
 all_data_hourly = (consumption.
     select(['postalcode', 'localtime', 'hour', 'contracts', 'consumption_filtered', 'consumption']).
@@ -96,7 +107,7 @@ for model_name, model in models.items():
         plot_regression_results(
             pipeline=pipelines[model_name],
             df=all_data_hourly.drop(['time', 'consumption_filtered'], axis=1),
-            filename=f"plots/results_{model_name}_postalcode_{postal_code}.pdf",
+            filename=f"{PLOT_DIR}/RandomForestRegressor/results_{model_name}_postalcode_{postal_code}.pdf",
             postal_code=postal_code,
             model_name=model_name,
             hours=96,

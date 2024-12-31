@@ -1,19 +1,19 @@
-import warnings
-import numpy as np
-import polars as pl
-import pandas as pd
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, MaxAbsScaler, PowerTransformer
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
-from sklearn.manifold import TSNE
-import seaborn as sns
-from utils import *
-import matplotlib.pyplot as plt
 import os
+import warnings
+
+import pandas as pd
+import seaborn as sns
+from sklearn.cluster import KMeans
+from sklearn.manifold import TSNE
+from sklearn.metrics import silhouette_score
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, MaxAbsScaler, PowerTransformer
+
+from utils import *
 
 warnings.filterwarnings("ignore")
 
 PLOT_DIR = "../../plots"
+os.makedirs(PLOT_DIR)
 
 # ================================
 # 1. Load and Preprocess Data
