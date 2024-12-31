@@ -129,7 +129,8 @@ scalers = {
 }
 
 # Select the scaling type
-selected_scaling = "RobustScaling"
+selected_scaling = "ZNormScaling"
+os.makedirs(f"{PLOT_DIR}/RandomForestClassifier/{selected_scaling}",exist_ok=True)
 
 # ================================
 # 6. Perform Clustering
@@ -137,7 +138,7 @@ selected_scaling = "RobustScaling"
 # Initialize KMeans clustering algorithm
 print(f"Performing clustering with KMeans using {selected_scaling}")
 clustering_algorithm = KMeans(
-    n_clusters=4, init='k-means++', algorithm="lloyd", max_iter=300, n_init=25, random_state=42
+    n_clusters=3, init='k-means++', algorithm="lloyd", max_iter=300, n_init=25, random_state=42
 )
 
 # Prepare data for clustering
@@ -250,7 +251,7 @@ sns.heatmap(
 plt.title(f"Grid Search Results (Mean Test Accuracy) - {selected_scaling}")
 plt.xlabel("Number of Estimators")
 plt.ylabel("Max Depth")
-plt.savefig(f"{PLOT_DIR}/RandomForestClassifier/grid_search_results_{selected_scaling}.png", dpi=300, bbox_inches="tight")
+plt.savefig(f"{PLOT_DIR}/RandomForestClassifier/{selected_scaling}/grid_search_results.png", dpi=300, bbox_inches="tight")
 
 # =====================
 # 11. Confusion Matrix
@@ -275,7 +276,7 @@ plt.xlabel("Predicted Cluster")
 plt.ylabel("Actual Cluster")
 plt.tight_layout()
 
-plt.savefig(f"{PLOT_DIR}/RandomForestClassifier/confusion_matrix_{selected_scaling}.png", dpi=300, bbox_inches="tight")
+plt.savefig(f"{PLOT_DIR}/RandomForestClassifier/{selected_scaling}/confusion_matrix.png", dpi=300, bbox_inches="tight")
 
 # =====================
 # 12. Feature Importance's
@@ -302,7 +303,7 @@ plt.ylabel('Feature')
 plt.tight_layout()
 
 # Save the plot
-plt.savefig(f"{PLOT_DIR}/RandomForestClassifier/feature_importances_{selected_scaling}.png", dpi=300, bbox_inches="tight")
+plt.savefig(f"{PLOT_DIR}/RandomForestClassifier/{selected_scaling}/feature_importances.png", dpi=300, bbox_inches="tight")
 
 # ================================
 # 13. t-SNE Visualization with Misclassified Points for All Data
@@ -353,7 +354,7 @@ plt.ylabel('t-SNE Component 2')
 plt.tight_layout()
 
 # Save the plot
-plt.savefig(f"{PLOT_DIR}/RandomForestClassifier/{selected_scaling}_tsne_misclassified_points_all.png", dpi=300, bbox_inches="tight")
+plt.savefig(f"{PLOT_DIR}/RandomForestClassifier/{selected_scaling}/tsne_misclassified_points.png", dpi=300, bbox_inches="tight")
 
 
 '''

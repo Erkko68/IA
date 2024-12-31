@@ -1,67 +1,83 @@
-# ================================
+# ==================================
 # 1. Import Necessary Libraries
-# ================================
+# ==================================
 import warnings
 import os
+import random
 
 import geopandas as gpd
+import polars as pl
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.dates import DateFormatter
 from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.tree import DecisionTreeRegressor
-
-from utils import *
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split, TimeSeriesSplit, GridSearchCV
+from sklearn.metrics import mean_squared_error
 
 # Suppress warnings for clean output
 warnings.filterwarnings("ignore")
 
-# Define working directory for data
+# ==================================
+# 2. Define Global Constants
+# ==================================
 DATA_DIR = "../../data"
 PLOT_DIR = "../../plots"
-os.makedirs(f"{PLOT_DIR}/RandomForestRegressor/",exist_ok=True)
+os.makedirs(f"{PLOT_DIR}/RandomForestRegressor/", exist_ok=True)
 
-consumption = pl.read_parquet(f"{DATA_DIR}/consumption_filtered.parquet")
-weather = pl.read_parquet(f"{DATA_DIR}/weather.parquet")
-cadaster = pl.read_parquet(f"{DATA_DIR}/cadaster_processed.parquet")
-socioeconomic = pl.read_parquet(f"{DATA_DIR}/socioeconomic.parquet")
-postalcodes = gpd.read_file(f"{DATA_DIR}/processed_postal_codes.gpkg")
-postalcodes = postalcodes.to_crs(cadaster.crs)
+# ==================================
+# 3. Load and Preprocess Data
+# ==================================
+# Load datasets
+consumption_data = pl.read_parquet(f"{DATA_DIR}/consumption_filtered.parquet")
+weather_data = pl.read_parquet(f"{DATA_DIR}/weather.parquet")
+cadaster_data = pl.read_parquet(f"{DATA_DIR}/cadaster_processed.parquet")
+socioeconomic_data = pl.read_parquet(f"{DATA_DIR}/socioeconomic.parquet")
+postalcodes_data = gpd.read_file(f"{DATA_DIR}/processed_postal_codes.gpkg")
 
-all_data_hourly = (consumption.
-    select(['postalcode', 'localtime', 'hour', 'contracts', 'consumption_filtered', 'consumption']).
-    with_columns(
-        pl.col("localtime").dt.year().cast(pl.Int64).alias("year")).
-    join(
-        socioeconomic, on = ["postalcode", "year"]).
-    join(
-        cadaster, on=["postalcode"]).
-    join(
-        weather.
-        with_columns(
-            pl.col("time").dt.convert_time_zone("Europe/Madrid").
-                alias("localtime")),
-        on=["postalcode", "localtime"]).
-    with_columns(
+# Merge datasets
+all_data_hourly = (
+    consumption_data
+    .select(['postalcode', 'localtime', 'hour', 'contracts', 'consumption_filtered', 'consumption'])
+    .with_columns(
+        pl.col("localtime").dt.year().cast(pl.Int64).alias("year")
+    )
+    .join(socioeconomic_data, on=["postalcode", "year"])
+    .join(cadaster_data, on=["postalcode"])
+    .join(
+        weather_data.with_columns(
+            pl.col("time").dt.convert_time_zone("Europe/Madrid").alias("localtime")
+        ),
+        on=["postalcode", "localtime"]
+    )
+    .with_columns(
         pl.col("localtime").dt.month().cast(pl.Utf8).alias("month"),
-        pl.col("localtime").dt.weekday().cast(pl.Utf8).alias("weekday")).
-    sort(
-        ["localtime"]).
-    to_pandas()
+        pl.col("localtime").dt.weekday().cast(pl.Utf8).alias("weekday")
+    )
+    .sort(["localtime"])
+    .to_pandas()
 )
 
+# ==================================
+# 4. Prepare Features and Target
+# ==================================
 # Define features and target
-X = (all_data_hourly.
-    drop(
-        ['localtime', 'time', 'consumption_filtered', 'consumption'],
-        axis=1))
+X = all_data_hourly.drop(['localtime', 'time', 'consumption_filtered', 'consumption'], axis=1)
 X = X[~pd.isna(all_data_hourly.consumption_filtered)]
 y = all_data_hourly['consumption_filtered']
 y = y[~pd.isna(all_data_hourly.consumption_filtered)]
 
 # Identify categorical and numerical columns
-categorical_cols = X.select_dtypes(include=['object']).columns
-numerical_cols = X.select_dtypes(include=['number']).columns
+categorical_columns = X.select_dtypes(include=['object']).columns
+numerical_columns = X.select_dtypes(include=['number']).columns
 
+# ==================================
+# 5. Define Preprocessing Steps
+# ==================================
 # Preprocessing for numerical data: scaling
 numerical_transformer = StandardScaler()
 
@@ -71,44 +87,116 @@ categorical_transformer = OneHotEncoder(handle_unknown='ignore')
 # Bundle preprocessing for numerical and categorical data
 preprocessor = ColumnTransformer(
     transformers=[
-        ('num', numerical_transformer, numerical_cols),
-        ('cat', categorical_transformer, categorical_cols)
-    ])
+        ('num', numerical_transformer, numerical_columns),
+        ('cat', categorical_transformer, categorical_columns)
+    ]
+)
 
+# ==================================
+# 6. Define Models and Hyperparameters
+# ==================================
 models = {
     "Decision Tree": DecisionTreeRegressor()
 }
-hyperparams_ranges = {
+
+hyperparameter_ranges = {
     "Decision Tree": {
         'model__max_depth': [15, 25, 40, 60],
         'model__min_samples_leaf': [5, 10, 15, 20],
     }
 }
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = (
-    train_test_split(X, y,
-                     test_size=(20*96*len(postalcodes))/len(X), shuffle=False))
+# ==================================
+# 7. Split Data into Train and Test Sets
+# ==================================
+test_size_ratio = (20 * 96 * len(postalcodes_data)) / len(X)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size_ratio, shuffle=False)
 
-# Evaluate each model
+# ==================================
+# 8. Train and Evaluate Models
+# ==================================
+def evaluate_regression_model(model_name, preprocessor, model, hyperparameter_ranges, cross_val, X_train, y_train, X_test, y_test):
+    pipeline = Pipeline(steps=[('preprocessor', preprocessor), ('model', model)])
+
+    grid_search = GridSearchCV(
+        estimator=pipeline, param_grid=hyperparameter_ranges, cv=cross_val, n_jobs=-1,
+        verbose=1, scoring='neg_mean_squared_error'
+    )
+    grid_search.fit(X_train, y_train)
+
+    best_pipeline = grid_search.best_estimator_
+    y_pred = best_pipeline.predict(X_test)
+
+    mse = mean_squared_error(y_test, y_pred)
+    rmse = np.sqrt(mse)
+    cvrmse = rmse / y_test.mean()
+
+    print(f"{model_name} - Best Parameters: {grid_search.best_params_}")
+    print(f"{model_name} - RMSE: {rmse:.2f}")
+    print(f"{model_name} - CV(RMSE): {cvrmse * 100:.2f}%")
+
+    return best_pipeline
+
 pipelines = {}
 for model_name, model in models.items():
     pipelines[model_name] = evaluate_regression_model(
         model_name=model_name,
         preprocessor=preprocessor,
         model=model,
-        hyperparams_ranges=hyperparams_ranges[model_name],
-        cross_val=TimeSeriesSplit(n_splits=5, test_size=96*len(postalcodes)),
+        hyperparameter_ranges=hyperparameter_ranges[model_name],
+        cross_val=TimeSeriesSplit(n_splits=5, test_size=96 * len(postalcodes_data)),
         X_train=X_train,
         y_train=y_train,
         X_test=X_test,
-        y_test=y_test)
-    for postal_code in ["25001", "25193"]:
-        plot_regression_results(
-            pipeline=pipelines[model_name],
-            df=all_data_hourly.drop(['time', 'consumption_filtered'], axis=1),
-            filename=f"{PLOT_DIR}/RandomForestRegressor/results_{model_name}_postalcode_{postal_code}.pdf",
-            postal_code=postal_code,
-            model_name=model_name,
-            hours=96,
-            npred=10)
+        y_test=y_test
+    )
+
+# ==================================
+# 9. Plot Regression Results
+# ==================================
+def plot_regression_results(pipeline, df, filename, postal_code, model_name, hours=96, npred=1):
+    postal_filter = df['postalcode'] == postal_code
+    filtered_df = df[postal_filter].copy()
+
+    X_test_filtered = filtered_df.drop(["localtime", "consumption"], axis=1)
+    y_pred = pipeline.predict(X_test_filtered)
+    filtered_df["predicted"] = y_pred
+
+    with PdfPages(filename) as pdf:
+        for _ in range(npred):
+            max_start = len(filtered_df) - hours
+            if max_start <= 0:
+                print("Not enough data to plot the specified number of hours.")
+                return
+
+            rand_start = random.randint(0, max_start)
+            df_slice = filtered_df.iloc[rand_start:rand_start + hours]
+
+            plt.figure(figsize=(12, 6))
+            plt.plot(df_slice["localtime"], df_slice["predicted"], label='Predicted', marker='x', linestyle='--', markersize=3)
+            plt.plot(df_slice["localtime"], df_slice["consumption"], label='Actual', marker='o', linestyle='-', markersize=3)
+
+            plt.title(f"Actual vs Predicted Consumption\nPostal Code: {postal_code} ({model_name})")
+            plt.xlabel("Time")
+            plt.ylabel("Consumption")
+            plt.legend()
+            plt.grid(True)
+
+            ax = plt.gca()
+            ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d %H:%M'))
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+
+            pdf.savefig()
+            plt.close()
+
+for postal_code in ["25001", "25193"]:
+    plot_regression_results(
+        pipeline=pipelines["Decision Tree"],
+        df=all_data_hourly.drop(['time', 'consumption_filtered'], axis=1),
+        filename=f"{PLOT_DIR}/RandomForestRegressor/results_DecisionTree_postalcode_{postal_code}.pdf",
+        postal_code=postal_code,
+        model_name="Decision Tree",
+        hours=96,
+        npred=10
+    )
