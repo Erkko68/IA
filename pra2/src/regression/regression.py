@@ -1,10 +1,6 @@
-# ==================================
-# 1. Import Necessary Libraries
-# ==================================
 import warnings
 import os
 import random
-
 import geopandas as gpd
 import polars as pl
 import pandas as pd
@@ -18,6 +14,9 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split, TimeSeriesSplit, GridSearchCV
 from sklearn.metrics import mean_squared_error
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.feature_selection import RFE
+import joblib  # Import joblib for saving/loading models
 
 # Suppress warnings for clean output
 warnings.filterwarnings("ignore")
@@ -26,8 +25,8 @@ warnings.filterwarnings("ignore")
 # 2. Define Global Constants
 # ==================================
 DATA_DIR = "../../data"
-PLOT_DIR = "../../plots"
-os.makedirs(f"{PLOT_DIR}/RandomForestRegressor/", exist_ok=True)
+PLOT_DIR = "../../plots/Regression/"
+os.makedirs(PLOT_DIR, exist_ok=True)
 
 # ==================================
 # 3. Load and Preprocess Data
@@ -95,15 +94,27 @@ preprocessor = ColumnTransformer(
 # ==================================
 # 6. Define Models and Hyperparameters
 # ==================================
+
 models = {
-    "Decision Tree": DecisionTreeRegressor()
+    #"Decision Tree": DecisionTreeRegressor(),
+    "Gradient Boosting": GradientBoostingRegressor(),
+    "Random Forest": RandomForestRegressor(),
 }
 
 hyperparameter_ranges = {
-    "Decision Tree": {
-        'model__max_depth': [15, 25, 40, 60],
-        'model__min_samples_leaf': [5, 10, 15, 20],
-    }
+    #"Decision Tree": {
+    #    'model__max_depth': [10, 20, 30],
+    #    'model__min_samples_leaf': [10, 15, 20],
+    #},
+    "Gradient Boosting": {
+        'model__n_estimators': [50, 100, 200],
+        'model__learning_rate': [0.01, 0.1, 0.2],
+        'model__max_depth': [3, 5, 10],
+    },
+    "Random Forest": {
+        'model__n_estimators': [50, 100],
+        'model__max_depth': [10, 15, 20],
+    },
 }
 
 # ==================================
@@ -113,33 +124,58 @@ test_size_ratio = (20 * 96 * len(postalcodes_data)) / len(X)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size_ratio, shuffle=False)
 
 # ==================================
-# 8. Train and Evaluate Models
+# 8. Train and Evaluate Models with RFE
 # ==================================
-def evaluate_regression_model(model_name, preprocessor, model, hyperparameter_ranges, cross_val, X_train, y_train, X_test, y_test):
+def evaluate_regression_model(
+    model_name, preprocessor, model, hyperparameter_ranges, cross_val, X_train, y_train, X_test, y_test, n_features_to_select=None
+):
+    # Create the pipeline with preprocessor and model
     pipeline = Pipeline(steps=[('preprocessor', preprocessor), ('model', model)])
 
+    # Perform GridSearchCV for hyperparameter tuning
     grid_search = GridSearchCV(
         estimator=pipeline, param_grid=hyperparameter_ranges, cv=cross_val, n_jobs=-1,
-        verbose=1, scoring='neg_mean_squared_error'
+        verbose=3, scoring='neg_mean_squared_error'
     )
     grid_search.fit(X_train, y_train)
 
+    # Get the best pipeline from the grid search
     best_pipeline = grid_search.best_estimator_
+
+    # If n_features_to_select is provided, apply Recursive Feature Elimination (RFE)
+    '''    if n_features_to_select is not None:
+        selector = RFE(best_pipeline.named_steps['model'], n_features_to_select)
+        X_train_rfe = selector.fit_transform(X_train, y_train)
+        X_test_rfe = selector.transform(X_test)
+        best_pipeline.fit(X_train_rfe, y_train)
+        y_pred = best_pipeline.predict(X_test_rfe)
+    else:
+        # If RFE is not used, just train on the full dataset
+    '''
     y_pred = best_pipeline.predict(X_test)
 
+    # Calculate metrics
     mse = mean_squared_error(y_test, y_pred)
     rmse = np.sqrt(mse)
     cvrmse = rmse / y_test.mean()
 
+    # Print results
     print(f"{model_name} - Best Parameters: {grid_search.best_params_}")
     print(f"{model_name} - RMSE: {rmse:.2f}")
     print(f"{model_name} - CV(RMSE): {cvrmse * 100:.2f}%")
 
-    return best_pipeline
+    # Save the trained model to a file
+    joblib.dump(best_pipeline, f"{model_name}_best_model.pkl")
 
-pipelines = {}
+    # Return model name (for consistency with original function)
+    return model_name
+
+# Initialize an empty dictionary to store model names
+trained_models = {}
+
 for model_name, model in models.items():
-    pipelines[model_name] = evaluate_regression_model(
+    # Train and save the best model, and store the model name in the dictionary
+    models[model_name] = evaluate_regression_model(
         model_name=model_name,
         preprocessor=preprocessor,
         model=model,
@@ -148,18 +184,22 @@ for model_name, model in models.items():
         X_train=X_train,
         y_train=y_train,
         X_test=X_test,
-        y_test=y_test
+        y_test=y_test,
+        n_features_to_select=10  # Customize this based on your needs
     )
 
 # ==================================
 # 9. Plot Regression Results
 # ==================================
-def plot_regression_results(pipeline, df, filename, postal_code, model_name, hours=96, npred=1):
+def plot_regression_results(model_name, df, filename, postal_code, hours=96, npred=1):
+    # Load the trained model from the saved file
+    loaded_model = joblib.load(f"{model_name}_best_model.pkl")
+
     postal_filter = df['postalcode'] == postal_code
     filtered_df = df[postal_filter].copy()
 
     X_test_filtered = filtered_df.drop(["localtime", "consumption"], axis=1)
-    y_pred = pipeline.predict(X_test_filtered)
+    y_pred = loaded_model.predict(X_test_filtered)
     filtered_df["predicted"] = y_pred
 
     with PdfPages(filename) as pdf:
@@ -190,13 +230,13 @@ def plot_regression_results(pipeline, df, filename, postal_code, model_name, hou
             pdf.savefig()
             plt.close()
 
-for postal_code in ["25001", "25193"]:
-    plot_regression_results(
-        pipeline=pipelines["Decision Tree"],
-        df=all_data_hourly.drop(['time', 'consumption_filtered'], axis=1),
-        filename=f"{PLOT_DIR}/RandomForestRegressor/results_DecisionTree_postalcode_{postal_code}.pdf",
-        postal_code=postal_code,
-        model_name="Decision Tree",
-        hours=96,
-        npred=10
-    )
+for model_name in trained_models.keys():  # Loop over model names (instead of pipelines)
+    for postal_code in ["25001", "25193"]:
+        plot_regression_results(
+            model_name=model_name,  # Pass only the model name
+            df=all_data_hourly.drop(['time', 'consumption_filtered'], axis=1),
+            filename=f"{PLOT_DIR}/{model_name.replace(' ', '')}/postalcode_{postal_code}.pdf",
+            postal_code=postal_code,
+            hours=96,
+            npred=10
+        )
