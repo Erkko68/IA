@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Slider Selector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .image-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .slider {
+            margin: 10px;
+        }
+        .selector {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to My Web Page</h1>
+    <p>Use the selector below to browse images grouped by folders.</p>
+
+    <div class="image-container">
+        <select id="folderSelector" class="selector">
+            <!-- Folder options will be dynamically populated -->
+        </select>
+
+        <input id="imageSlider" class="slider" type="range" min="1" max="1" value="1">
+
+        <img id="displayedImage" src="" alt="Displayed Image" width="400">
+    </div>
+
+    <script>
+        // Define the folder structure
+        const imageFolders = {
+            "MaxAbsScaling": [
+                "load_curves_1.png",
+                "load_curves_2.png",
+                "load_curves_3.png"
+            ],
+            "MinMaxScaling": [
+                "load_curves_1.png",
+                "load_curves_2.png",
+                "load_curves_3.png"
+            ],
+            "StandardScaling": [
+                "load_curves_1.png",
+                "load_curves_2.png",
+                "load_curves_3.png"
+            ]
+        };
+
+        const folderSelector = document.getElementById("folderSelector");
+        const imageSlider = document.getElementById("imageSlider");
+        const displayedImage = document.getElementById("displayedImage");
+
+        // Populate the folder selector
+        Object.keys(imageFolders).forEach(folder => {
+            const option = document.createElement("option");
+            option.value = folder;
+            option.textContent = folder;
+            folderSelector.appendChild(option);
+        });
+
+        // Update the slider and image based on the selected folder
+        function updateSliderAndImage() {
+            const selectedFolder = folderSelector.value;
+            const images = imageFolders[selectedFolder];
+
+            // Update the slider range
+            imageSlider.max = images.length;
+            imageSlider.value = 1;
+
+            // Update the displayed image
+            updateImage();
+        }
+
+        // Update the displayed image based on the slider value
+        function updateImage() {
+            const selectedFolder = folderSelector.value;
+            const images = imageFolders[selectedFolder];
+            const imageIndex = imageSlider.value - 1;
+            const imagePath = `plots/kmeans/${selectedFolder}/${images[imageIndex]}`;
+
+            displayedImage.src = imagePath;
+        }
+
+        // Event listeners
+        folderSelector.addEventListener("change", updateSliderAndImage);
+        imageSlider.addEventListener("input", updateImage);
+
+        // Initialize the selector and image
+        updateSliderAndImage();
+    </script>
+</body>
+</html>

@@ -13,7 +13,7 @@ from utils import *
 warnings.filterwarnings("ignore")
 
 PLOT_DIR = "../../plots"
-os.makedirs(PLOT_DIR)
+os.makedirs(PLOT_DIR,exist_ok=True)
 
 # ================================
 # 1. Load and Preprocess Data
