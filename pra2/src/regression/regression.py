@@ -15,10 +15,10 @@ from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import learning_curve, validation_curve
+from sklearn.model_selection import learning_curve, validation_curve, TimeSeriesSplit
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler
 from sklearn.tree import DecisionTreeRegressor
 
 # Suppress warnings for clean output
@@ -82,7 +82,7 @@ numerical_columns = X.select_dtypes(include=['number']).columns
 # 5. Define Preprocessing Steps
 # ==================================
 # Preprocessing for numerical data: scaling
-numerical_transformer = StandardScaler()
+numerical_transformer = MinMaxScaler()
 
 # Preprocessing for categorical data: one-hot encoding
 categorical_transformer = OneHotEncoder(handle_unknown='ignore')
@@ -107,13 +107,13 @@ models = {
 
 hyperparameter_ranges = {
     "DecisionTree": {
-        'model__max_depth': [20, 30, 40],
+        'model__max_depth': [20, 30, 40, 60],
         'model__min_samples_leaf': [10, 15, 20],
     },
     "GradientBoosting": {
         'model__n_estimators': [100, 200, 300],
         'model__learning_rate': [0.1, 0.2],
-        'model__max_depth': [10, 20],
+        'model__max_depth': [10, 20, 30],
     },
     "RandomForest": {
         'model__n_estimators': [100, 200, 300],
@@ -283,7 +283,6 @@ def evaluate_regression_model(
     plt.grid()
     plt.savefig(f"{PLOT_DIR}{model_name}/cv_performance.png", format="png", dpi=300)
 
-'''
 for model_name, model in models.items():
     # Train and save the best model
     evaluate_regression_model(
@@ -297,7 +296,6 @@ for model_name, model in models.items():
         X_test=X_test,
         y_test=y_test
     )
-'''
 
 # ==================================
 # 9. Plot Regression Results
