@@ -121,7 +121,7 @@ scalers = {
         columns=consumption_wide.columns,
         index=consumption_wide.index
     ),
-    # Using robust scaling gives no major diferences (this means the data doesn't have much outliners)
+    # Using robust scaling gives no major differences (this means the data doesn't have many outliners)
     "RobustScaling": pd.DataFrame(
         RobustScaler().fit_transform(consumption_wide),
         columns=consumption_wide.columns,

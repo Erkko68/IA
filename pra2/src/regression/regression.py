@@ -26,6 +26,7 @@ warnings.filterwarnings("ignore")
 # ==================================
 DATA_DIR = "../../data"
 PLOT_DIR = "../../plots/Regression/"
+MODEL_PATH = "../../models/"
 os.makedirs(PLOT_DIR, exist_ok=True)
 
 # ==================================
@@ -96,23 +97,23 @@ preprocessor = ColumnTransformer(
 # ==================================
 
 models = {
-    #"Decision Tree": DecisionTreeRegressor(),
+    "Decision Tree": DecisionTreeRegressor(),
     "Gradient Boosting": GradientBoostingRegressor(),
     "Random Forest": RandomForestRegressor(),
 }
 
 hyperparameter_ranges = {
-    #"Decision Tree": {
-    #    'model__max_depth': [10, 20, 30],
-    #    'model__min_samples_leaf': [10, 15, 20],
-    #},
+    "Decision Tree": {
+        'model__max_depth': [10, 20, 30],
+        'model__min_samples_leaf': [10, 15, 20],
+    },
     "Gradient Boosting": {
         'model__n_estimators': [50, 100, 200],
         'model__learning_rate': [0.01, 0.1, 0.2],
         'model__max_depth': [3, 5, 10],
     },
     "Random Forest": {
-        'model__n_estimators': [50, 100],
+        'model__n_estimators': [50, 100, 200],
         'model__max_depth': [10, 15, 20],
     },
 }
@@ -127,7 +128,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size_ra
 # 8. Train and Evaluate Models with RFE
 # ==================================
 def evaluate_regression_model(
-    model_name, preprocessor, model, hyperparameter_ranges, cross_val, X_train, y_train, X_test, y_test, n_features_to_select=None
+    model_name, preprocessor, model, hyperparameter_ranges, cross_val, X_train, y_train, X_test, y_test
 ):
     # Create the pipeline with preprocessor and model
     pipeline = Pipeline(steps=[('preprocessor', preprocessor), ('model', model)])
@@ -141,17 +142,6 @@ def evaluate_regression_model(
 
     # Get the best pipeline from the grid search
     best_pipeline = grid_search.best_estimator_
-
-    # If n_features_to_select is provided, apply Recursive Feature Elimination (RFE)
-    '''    if n_features_to_select is not None:
-        selector = RFE(best_pipeline.named_steps['model'], n_features_to_select)
-        X_train_rfe = selector.fit_transform(X_train, y_train)
-        X_test_rfe = selector.transform(X_test)
-        best_pipeline.fit(X_train_rfe, y_train)
-        y_pred = best_pipeline.predict(X_test_rfe)
-    else:
-        # If RFE is not used, just train on the full dataset
-    '''
     y_pred = best_pipeline.predict(X_test)
 
     # Calculate metrics
@@ -165,17 +155,14 @@ def evaluate_regression_model(
     print(f"{model_name} - CV(RMSE): {cvrmse * 100:.2f}%")
 
     # Save the trained model to a file
-    joblib.dump(best_pipeline, f"{model_name}_best_model.pkl")
+    os.makedirs(MODEL_PATH,exist_ok=True)
+    joblib.dump(best_pipeline, f"{MODEL_PATH}{model_name}_best_model.pkl")
 
-    # Return model name (for consistency with original function)
-    return model_name
 
-# Initialize an empty dictionary to store model names
-trained_models = {}
-
+'''
 for model_name, model in models.items():
-    # Train and save the best model, and store the model name in the dictionary
-    models[model_name] = evaluate_regression_model(
+    # Train and save the best model
+    evaluate_regression_model(
         model_name=model_name,
         preprocessor=preprocessor,
         model=model,
@@ -184,16 +171,20 @@ for model_name, model in models.items():
         X_train=X_train,
         y_train=y_train,
         X_test=X_test,
-        y_test=y_test,
-        n_features_to_select=10  # Customize this based on your needs
+        y_test=y_test
     )
+'''
 
 # ==================================
 # 9. Plot Regression Results
 # ==================================
-def plot_regression_results(model_name, df, filename, postal_code, hours=96, npred=1):
+def plot_regression_results(model_name, df, filename, postal_code, hours=96, npred=1, start=0):
+    
+    output_dir = os.path.dirname(filename)
+    os.makedirs(output_dir, exist_ok=True)
+    
     # Load the trained model from the saved file
-    loaded_model = joblib.load(f"{model_name}_best_model.pkl")
+    loaded_model = joblib.load(f"{MODEL_PATH}{model_name}_best_model.pkl")
 
     postal_filter = df['postalcode'] == postal_code
     filtered_df = df[postal_filter].copy()
@@ -204,13 +195,8 @@ def plot_regression_results(model_name, df, filename, postal_code, hours=96, npr
 
     with PdfPages(filename) as pdf:
         for _ in range(npred):
-            max_start = len(filtered_df) - hours
-            if max_start <= 0:
-                print("Not enough data to plot the specified number of hours.")
-                return
 
-            rand_start = random.randint(0, max_start)
-            df_slice = filtered_df.iloc[rand_start:rand_start + hours]
+            df_slice = filtered_df.iloc[start:start + hours]
 
             plt.figure(figsize=(12, 6))
             plt.plot(df_slice["localtime"], df_slice["predicted"], label='Predicted', marker='x', linestyle='--', markersize=3)
@@ -230,13 +216,32 @@ def plot_regression_results(model_name, df, filename, postal_code, hours=96, npr
             pdf.savefig()
             plt.close()
 
-for model_name in trained_models.keys():  # Loop over model names (instead of pipelines)
-    for postal_code in ["25001", "25193"]:
+# Set a fixed seed for reproducibility
+RANDOM_SEED = 42
+random.seed(RANDOM_SEED)
+
+for postal_code in ["25001", "25193"]:
+    # Calculate start
+    postal_filter = all_data_hourly['postalcode'] == postal_code
+    filtered_df = all_data_hourly[postal_filter].copy()
+    max_start = len(filtered_df) - 96  # Assuming hours=96
+
+    if max_start <= 0:
+        print(f"Not enough data for postal code {postal_code}.")
+        continue
+
+    # Generate a consistent random start
+    random_start = random.randint(0, max_start)
+
+    # Iterate over models
+    for model_name in models.keys():
+        # Plot results
         plot_regression_results(
-            model_name=model_name,  # Pass only the model name
-            df=all_data_hourly.drop(['time', 'consumption_filtered'], axis=1),
-            filename=f"{PLOT_DIR}/{model_name.replace(' ', '')}/postalcode_{postal_code}.pdf",
-            postal_code=postal_code,
-            hours=96,
-            npred=10
+                model_name=model_name,  # Pass only the model name
+                df=all_data_hourly.drop(['time', 'consumption_filtered'], axis=1),
+                filename=f"{PLOT_DIR}/{model_name.replace(' ', '')}/postalcode_{postal_code}.pdf",
+                postal_code=postal_code,
+                hours=96,
+                npred=10,
+                start=random_start
         )
