@@ -3,7 +3,7 @@ import warnings
 
 import pandas as pd
 import seaborn as sns
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, AgglomerativeClustering
 from sklearn.manifold import TSNE
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, MaxAbsScaler, PowerTransformer
@@ -147,6 +147,7 @@ scalers = {
 # 6. Perform K-Means Clustering with PCA and t-SNE Validation
 # ================================
 # Range of cluster numbers to evaluate
+'''
 CLUSTER_RANGE = range(2, 8)
 
 for scaling_type, scaled_data in scalers.items():
@@ -239,3 +240,113 @@ for scaling_type, scaled_data in scalers.items():
         plt.ylabel("Silhouette Score")
         plt.title(f"Silhouette Analysis ({scaling_type}, PCA={n_components})")
         plt.savefig(f"{pca_dir}/silhouette.png", dpi=300)
+'''
+
+# ================================
+# 7. Perform Hierarchical Clustering with PCA and Dendrogram Validation
+# ================================
+# Range of cluster numbers to evaluate
+CLUSTER_RANGE = range(2, 8)
+
+for scaling_type, scaled_data in scalers.items():
+    os.makedirs(f"{PLOT_DIR}/hierarchical/{scaling_type}", exist_ok=True)
+    silhouette_scores = []
+    clustering_data = scaled_data.dropna()
+    clustering_index = clustering_data.index.to_frame(index=False)
+    clustering_data.reset_index(drop=True, inplace=True)
+    
+    # PCA Loop: Define PCA components to explore
+    PCA_COMPONENTS = [2, 3, 4, 5]  # Adjust based on your analysis needs
+    pca_silhouette_scores = []
+
+    for n_components in PCA_COMPONENTS:
+        print(f"Performing PCA ({scaling_type}) with {n_components} components")
+        
+        # Apply PCA
+        pca = PCA(n_components=n_components, random_state=42)
+        pca_data = pca.fit_transform(clustering_data)
+        pca_dir = f"{PLOT_DIR}/hierarchical/{scaling_type}/pca_{n_components}"
+        os.makedirs(pca_dir, exist_ok=True)
+        
+        silhouette_scores_pca = []
+        
+        for n_clusters in CLUSTER_RANGE:
+            print(f"Hierarchical Clustering ({scaling_type}, PCA={n_components}) with {n_clusters} clusters")
+            
+            # Perform Agglomerative Hierarchical clustering
+            clustering_model = AgglomerativeClustering(
+                n_clusters=n_clusters, linkage="ward", compute_distances=True
+            )
+            cluster_labels = clustering_model.fit_predict(pca_data)
+            
+            # Calculate silhouette score
+            silhouette_avg = silhouette_score(pca_data, cluster_labels)
+            silhouette_scores_pca.append(silhouette_avg)
+            
+            # Plot dendrogram
+            plt.figure(figsize=(15, 8))
+            plt.title(f"Hierarchical Clustering Dendrogram - {scaling_type}, PCA={n_components}")
+            plot_dendrogram(clustering_model, truncate_mode='lastp', p=n_clusters)
+            plt.xlabel("Number of points in node (or index of point if no parenthesis).")
+            plt.ylabel("Distance based on linkage")
+            plt.savefig(f"{pca_dir}/dendrogram_{n_clusters}.png", dpi=300)
+            plt.close()
+
+            # Plot daily load curves with cluster labels
+            plot_daily_load_curves_with_centroids_to_png(
+                df=(consumption.select(pl.all().exclude("cluster"))
+                    .join(
+                        consumption.group_by(["postalcode", "date"]).agg(
+                            (pl.col("consumption_filtered").mean() * 24).alias("daily_consumption")
+                        ),
+                        on=["postalcode", "date"]
+                    ).with_columns(
+                        (pl.col("consumption_filtered") * 100 / pl.col("daily_consumption")).alias("consumption_filtered")
+                    ).join(
+                        pl.DataFrame(
+                            pd.concat([
+                                clustering_index.reset_index(drop=True),
+                                pd.DataFrame(cluster_labels, columns=["cluster"])
+                            ], axis=1)
+                        ).with_columns(pl.col("date").cast(pl.Date)),
+                        on=["postalcode", "date"]
+                    )
+                ),
+                png_path=f"{pca_dir}/load_curves_{n_clusters}.png",
+                add_in_title=f"Hierarchical {scaling_type}, PCA={n_components}"
+            )
+        
+        # Average silhouette score across cluster ranges for the current PCA
+        avg_silhouette_score = sum(silhouette_scores_pca) / len(silhouette_scores_pca)
+        pca_silhouette_scores.append(avg_silhouette_score)
+
+        # Plot silhouette scores for PCA
+        plt.figure(figsize=(10, 5))
+        plt.plot(CLUSTER_RANGE, silhouette_scores_pca, marker="o")
+        plt.xlabel("Number of Clusters")
+        plt.ylabel("Silhouette Score")
+        plt.title(f"Silhouette Analysis ({scaling_type}, PCA={n_components})")
+        plt.savefig(f"{pca_dir}/silhouette.png", dpi=300)
+
+# Dendrogram plot function
+def plot_dendrogram(model, **kwargs):
+    # Create linkage matrix and then plot the dendrogram
+
+    # create the counts of samples under each node
+    counts = np.zeros(model.children_.shape[0])
+    n_samples = len(model.labels_)
+    for i, merge in enumerate(model.children_):
+        current_count = 0
+        for child_idx in merge:
+            if child_idx < n_samples:
+                current_count += 1  # leaf node
+            else:
+                current_count += counts[child_idx - n_samples]
+        counts[i] = current_count
+
+    linkage_matrix = np.column_stack(
+        [model.children_, model.distances_, counts]
+    ).astype(float)
+
+    # Plot the corresponding dendrogram
+    dendrogram(linkage_matrix, **kwargs)
