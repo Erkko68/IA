@@ -218,25 +218,7 @@ def evaluate_regression_model(
     plt.legend()
     plt.savefig(f"{PLOT_DIR}{model_name}/learning_curve.png", format="png", dpi=300) 
 
-    # Hyperparameter tuning visualization (validation curve)
-    for param_name, param_values in hyperparameter_ranges.items():
-        train_scores, test_scores = validation_curve(
-            best_pipeline, X_train, y_train, param_name=param_name, param_range=param_values,
-            cv=cross_val, scoring='neg_mean_squared_error', n_jobs=-1
-        )
-        train_scores_mean = -train_scores.mean(axis=1)
-        test_scores_mean = -test_scores.mean(axis=1)
-
-        plt.figure(figsize=(10, 6))
-        plt.plot(param_values, np.sqrt(train_scores_mean), label="Training RMSE", color="blue", marker='o')
-        plt.plot(param_values, np.sqrt(test_scores_mean), label="Validation RMSE", color="green", marker='o')
-        plt.title(f"{model_name} - Validation Curve ({param_name})")
-        plt.xlabel(param_name)
-        plt.ylabel("RMSE")
-        plt.legend()
-        plt.savefig(f"{PLOT_DIR}{model_name}/validation_curve.png", format="png", dpi=300) 
-
-    # Grid Search Heatmap (only for two hyperparameters)
+    # Grid Search Heatmap (Validation curve for all the hyperparameters)
     keys = list(hyperparameter_ranges.keys())
     if len(keys) >= 2:
         param1, param2 = keys[:2]
@@ -253,24 +235,6 @@ def evaluate_regression_model(
         plt.xlabel(param2)
         plt.ylabel(param1)
         plt.savefig(f"{PLOT_DIR}{model_name}/grid_search_heatmap.png", format="png", dpi=300)
-
-    # Hyperparameter Score Line Plot
-    for param_name, param_values in hyperparameter_ranges.items():
-        train_scores, test_scores = validation_curve(
-            best_pipeline, X_train, y_train, param_name=param_name, param_range=param_values,
-            cv=cross_val, scoring='neg_mean_squared_error', n_jobs=-1
-        )
-        train_scores_mean = -train_scores.mean(axis=1)
-        test_scores_mean = -test_scores.mean(axis=1)
-
-        plt.figure(figsize=(10, 6))
-        plt.plot(param_values, np.sqrt(train_scores_mean), label="Training RMSE", color="blue", marker='o')
-        plt.plot(param_values, np.sqrt(test_scores_mean), label="Validation RMSE", color="green", marker='o')
-        plt.title(f"{model_name} - Hyperparameter Performance ({param_name})")
-        plt.xlabel(param_name)
-        plt.ylabel("RMSE")
-        plt.legend()
-        plt.savefig(f"{PLOT_DIR}{model_name}/{param_name}_performance.png", format="png", dpi=300)
 
     # Model Performance Across CV Folds
     results = pd.DataFrame(grid_search.cv_results_)
