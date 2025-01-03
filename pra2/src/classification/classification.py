@@ -9,13 +9,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import polars as pl
 import seaborn as sns
+from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.manifold import TSNE
 from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
+from sklearn.preprocessing import StandardScaler, MaxAbsScaler, RobustScaler
 
 # Suppress warnings for clean output
 warnings.filterwarnings("ignore")
@@ -115,12 +116,12 @@ scalers = {
         columns=consumption_wide.columns,
         index=consumption_wide.index
     ),
-    "MinMaxScaling": pd.DataFrame(
-        MinMaxScaler().fit_transform(consumption_wide),
+    "MaxAbsScaling": pd.DataFrame(
+        MaxAbsScaler().fit_transform(consumption_wide),
         columns=consumption_wide.columns,
         index=consumption_wide.index
     ),
-    # Set num cluster to 4
+    # Set num clusters to 7
     "RobustScaling": pd.DataFrame(
         RobustScaler().fit_transform(consumption_wide),
         columns=consumption_wide.columns,
@@ -129,16 +130,18 @@ scalers = {
 }
 
 # Select the scaling type
-selected_scaling = "ZNormScaling"
+selected_scaling = "RobustScaling"
 os.makedirs(f"{PLOT_DIR}/RandomForestClassifier/{selected_scaling}",exist_ok=True)
 
 # ================================
 # 6. Perform Clustering
 # ================================
+
+
 # Initialize KMeans clustering algorithm
 print(f"Performing clustering with KMeans using {selected_scaling}")
 clustering_algorithm = KMeans(
-    n_clusters=3, init='k-means++', algorithm="lloyd", max_iter=300, n_init=25, random_state=42
+    n_clusters=7, init='k-means++', algorithm="lloyd", max_iter=300, n_init=25, random_state=42
 )
 
 # Prepare data for clustering
@@ -146,8 +149,12 @@ clustering_X = scalers[selected_scaling].dropna(axis=0)
 index_X = clustering_X.index.to_frame(index=False)
 clustering_X = clustering_X.reset_index(drop=True)
 
+# Perform PCA
+pca = PCA(n_components=2, random_state=42)
+pca_data = pca.fit_transform(clustering_X)
+
 # Perform clustering
-cl_results = clustering_algorithm.fit_predict(clustering_X)
+cl_results = clustering_algorithm.fit_predict(pca_data)
 
 # Combine clustering results with postal code and date information
 clustering_results = (pl.concat([
@@ -203,7 +210,7 @@ grid_search = GridSearchCV(
     param_grid,
     cv=5,       # Cross validation
     n_jobs=-1,  # Use all available CPU cores
-    verbose=1
+    verbose=3
 )
 grid_search.fit(X_train, y_train)
 

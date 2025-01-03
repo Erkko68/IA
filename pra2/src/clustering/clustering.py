@@ -7,6 +7,7 @@ from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, MaxAbsScaler, PowerTransformer
+from sklearn.decomposition import PCA
 
 from utils import *
 
@@ -143,7 +144,7 @@ scalers = {
 
 
 # ================================
-# 6. Perform K-Means Clustering with t-SNE Validation
+# 6. Perform K-Means Clustering with PCA and t-SNE Validation
 # ================================
 # Range of cluster numbers to evaluate
 CLUSTER_RANGE = range(2, 8)
@@ -154,66 +155,87 @@ for scaling_type, scaled_data in scalers.items():
     clustering_data = scaled_data.dropna()
     clustering_index = clustering_data.index.to_frame(index=False)
     clustering_data.reset_index(drop=True, inplace=True)
+    
+    # PCA Loop: Define PCA components to explore
+    PCA_COMPONENTS = [2,3,4,5]  # Adjust based on your analysis needs
+    pca_silhouette_scores = []
 
-    for n_clusters in CLUSTER_RANGE:
-        print(f"K-Means Clustering ({scaling_type}) with {n_clusters} clusters")
+    for n_components in PCA_COMPONENTS:
+        print(f"Performing PCA ({scaling_type}) with {n_components} components")
         
-        # Perform K-Means clustering
-        # Increased maximum itterations and n_init (starting positions) gives a better fit for clusters of 3-4
-        clustering_model = KMeans(n_clusters=n_clusters, init='k-means++', algorithm = "lloyd" ,max_iter=300, n_init = 15, random_state=42)
-        cluster_labels = clustering_model.fit_predict(clustering_data)
+        # Apply PCA
+        pca = PCA(n_components=n_components, random_state=42)
+        pca_data = pca.fit_transform(clustering_data)
+        pca_dir = f"{PLOT_DIR}/kmeans/{scaling_type}/pca_{n_components}"
+        os.makedirs(pca_dir, exist_ok=True)
+        
+        silhouette_scores_pca = []
+        
+        for n_clusters in CLUSTER_RANGE:
+            print(f"K-Means Clustering ({scaling_type}, PCA={n_components}) with {n_clusters} clusters")
+            
+            # Perform K-Means clustering
+            clustering_model = KMeans(
+                n_clusters=n_clusters, init='k-means++', algorithm="lloyd",
+                max_iter=100, n_init=15, random_state=42
+            )
+            cluster_labels = clustering_model.fit_predict(pca_data)
+            
+            # Calculate silhouette score
+            silhouette_avg = silhouette_score(pca_data, cluster_labels)
+            silhouette_scores_pca.append(silhouette_avg)
+            
+            # Plot daily load curves with centroids
+            plot_daily_load_curves_with_centroids_to_png(
+                df=(consumption.select(pl.all().exclude("cluster"))
+                    .join(
+                        consumption.group_by(["postalcode", "date"]).agg(
+                            (pl.col("consumption_filtered").mean() * 24).alias("daily_consumption")
+                        ),
+                        on=["postalcode", "date"]
+                    ).with_columns(
+                        (pl.col("consumption_filtered") * 100 / pl.col("daily_consumption")).alias("consumption_filtered")
+                    ).join(
+                        pl.DataFrame(
+                            pd.concat([
+                                clustering_index.reset_index(drop=True),
+                                pd.DataFrame(cluster_labels, columns=["cluster"])
+                            ], axis=1)
+                        ).with_columns(pl.col("date").cast(pl.Date)),
+                        on=["postalcode", "date"]
+                    )
+                ),
+                png_path=f"{pca_dir}/load_curves_{n_clusters}.png",
+                add_in_title=f"K-Means {scaling_type}, PCA={n_components}"
+            )
+            
+            # Perform t-SNE for validation
+            print(f"Performing t-SNE Visualization ({scaling_type}, PCA={n_components}) for {n_clusters} clusters")
+            tsne = TSNE(n_components=2, random_state=42, perplexity=40, max_iter=2000)
+            tsne_results = tsne.fit_transform(pca_data)
+            
+            # Create a DataFrame for t-SNE results
+            tsne_df = pd.DataFrame(tsne_results, columns=['t-SNE 1', 't-SNE 2'])
+            tsne_df['Cluster'] = cluster_labels
+            
+            # Plot t-SNE results
+            plt.figure(figsize=(8, 8))
+            sns.scatterplot(
+                x='t-SNE 1', y='t-SNE 2', hue='Cluster', data=tsne_df,
+                palette='tab10', legend='full', alpha=0.8
+            )
+            plt.title(f't-SNE Visualization ({scaling_type}, PCA={n_components}, {n_clusters} Clusters)')
+            plt.savefig(f"{pca_dir}/tsne_{n_clusters}.png", dpi=300)
+            plt.close()
+        
+        # Average silhouette score across cluster ranges for the current PCA
+        avg_silhouette_score = sum(silhouette_scores_pca) / len(silhouette_scores_pca)
+        pca_silhouette_scores.append(avg_silhouette_score)
 
-        # Calculate silhouette score
-        silhouette_avg = silhouette_score(clustering_data, cluster_labels)
-        silhouette_scores.append(silhouette_avg)
-
-        # Plot daily load curves with centroids
-        plot_daily_load_curves_with_centroids_to_png(
-            df=(consumption.select(pl.all().exclude("cluster"))
-                .join(
-                    consumption.group_by(["postalcode", "date"]).agg(
-                        (pl.col("consumption_filtered").mean() * 24).alias("daily_consumption")
-                    ),
-                    on=["postalcode", "date"]
-                ).with_columns(
-                    (pl.col("consumption_filtered") * 100 / pl.col("daily_consumption")).alias("consumption_filtered")
-                ).join(
-                    pl.DataFrame(
-                        pd.concat([
-                            clustering_index.reset_index(drop=True),
-                            pd.DataFrame(cluster_labels, columns=["cluster"])
-                        ], axis=1)
-                    ).with_columns(pl.col("date").cast(pl.Date)),
-                    on=["postalcode", "date"]
-                )
-            ),
-            png_path=f"{PLOT_DIR}/kmeans/{scaling_type}/load_curves_{n_clusters}.png",
-            add_in_title="K-Means " + scaling_type
-        )
-
-        # Perform t-SNE for validation
-        print(f"Performing t-SNE Visualization ({scaling_type}) for {n_clusters} clusters")
-        tsne = TSNE(n_components=2, random_state=42, perplexity=40, max_iter=2000)
-        tsne_results = tsne.fit_transform(clustering_data)
-
-        # Create a DataFrame for t-SNE results
-        tsne_df = pd.DataFrame(tsne_results, columns=['t-SNE 1', 't-SNE 2'])
-        tsne_df['Cluster'] = cluster_labels
-
-        # Plot t-SNE results
-        plt.figure(figsize=(8, 8))
-        sns.scatterplot(
-            x='t-SNE 1', y='t-SNE 2', hue='Cluster', data=tsne_df,
-            palette='tab10', legend='full', alpha=0.8
-        )
-        plt.title(f't-SNE Visualization ({scaling_type}, {n_clusters} Clusters)')
-        plt.savefig(f"{PLOT_DIR}/kmeans/{scaling_type}/tsne_{n_clusters}.png", dpi=300)
-        plt.close()
-
-    # Plot silhouette scores
-    plt.figure(figsize=(10, 5))
-    plt.plot(CLUSTER_RANGE, silhouette_scores, marker="o")
-    plt.xlabel("Number of Clusters")
-    plt.ylabel("Silhouette Score")
-    plt.title(f"Silhouette Analysis ({scaling_type})")
-    plt.savefig(f"{PLOT_DIR}/kmeans/{scaling_type}/silhouette.png", dpi=300)
+        # Plot silhouette scores for PCA
+        plt.figure(figsize=(10, 5))
+        plt.plot(CLUSTER_RANGE, silhouette_scores_pca, marker="o")
+        plt.xlabel("Number of Clusters")
+        plt.ylabel("Silhouette Score")
+        plt.title(f"Silhouette Analysis ({scaling_type}, PCA={n_components})")
+        plt.savefig(f"{pca_dir}/silhouette.png", dpi=300)

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA: Load Curves</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Button class */
+        .button {
+            padding: 15px 25px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            width: 200px;
+            text-align: center;
+            margin: 5px;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .button.selected {
+            background-color: #357a38;
+        }
+
+        /* Button container for vertical or horizontal layout */
+        .button-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap; /* Allows wrapping for horizontal layout */
+        }
+
+        /* Layout for vertical buttons */
+        .vertical {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Layout for horizontal buttons */
+        .horizontal {
+            flex-direction: row;
+            justify-content: center;
+        }
+
+        /* Container for Images and Slider */
+        .content-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .image-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Slider below images */
+        .slider-container {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        /* New wrapper for slider and labels */
+        .slider-wrapper {
+            position: relative;
+            width: 80%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Slider itself */
+        #imageSlider, #pcaSlider {
+            width: 100%;
+        }
+
+        /* Container for the labels */
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            position: absolute;
+            bottom: -30px;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Separator line across the screen */
+        .separator {
+            width: 100%;
+            height: 1px;
+            background-color: #ddd;
+            margin: 20px;
+        }
+
+        /* New Silhouette Container with Grid layout */
+        .silhouette-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Split into two equal columns */
+            width: 100%;
+            height: 50vh; /* Takes half of the screen vertically */
+        }
+
+        /* Container for Text and Image */
+        .silhouette-text-container, .silhouette-image-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Image container styles */
+        #silhouetteImage {
+            object-fit: contain;
+            display: block;
+        }
+
+        /* Classification Results Container */
+        .classification-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Split into two equal columns */
+            width: 100%;
+            height: 50vh; /* Takes half of the screen vertically */
+            margin-top: 20px;
+        }
+
+        .classification-box {
+            height: 100%;
+        }
+
+        /* Left column (Image and Scaling buttons) */
+        .classification-box:first-child {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .classification-box img {
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+
+        /* New container for Classification Text */
+        .classification-description-container {
+            padding: 15px;
+            border-radius: 5px;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .content-text {
+            padding: 20px;
+            margin: 20px 60px;
+            font-size: 16px;
+            text-align: justify;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Clustering: Common Daily Load Curves</h1>
+
+    <div class="content-text">
+        <p>Després de carregar les dades i convertirles al dataframe de polars, per tal de garantir un anàlisi precis en el temps, convertint els registres de temps a la zona horària local ("Europa/Madrid") i extraient els atributs corresponents de <code>hora</code> i <code>data</code>. Aquesta informació temporal és essencial per identificar patrons diaris, que són fonamentals per a les tècniques de clustering basades en comportaments temporals.</p>
+        <p>A continuació, les dades es classifiquen per <code>codi_postal</code> i <code>localtime</code> per facilitar les operacions de sèrie temporal i el càlcul de mètriques agregades. Es calculen estadístiques mòbils, incloent-hi la mitjana mòbil de 48 hores, la desviació estàndard i el 10è percentil en una finestra de 168 hores. Aquestes estadístiques ofereixen una perspectiva sobre les tendències locals de consum i ajuden a identificar variacions anòmales en el consum que podrien influir en la creació de clústers.</p>
+        <p>Les mètriques calculades s’integren al conjunt de dades original i es normalitzen utilitzant valors Z (Z-normalització), cosa que permet que els valors de consum es comparin de manera uniforme independentment de les diferències de magnitud entre codis postals, aquest aspecte é smolt important a l'hora de realitzar clustering amb la tècnica de K-means ja que aquest es veu molt influenciat per dades anòmales amb valors molt grans o molt petits. Es filtren els valors anòmals eliminant els registres amb consum zero (ja que no aporten informació rellevan) i aplicant llindars de normalització Z i quantils mòbils per eliminar soroll i destacar patrons significatius.</p>
+        <p>Seguidament, les dades es preparen per al clustering agregant percentatges de consum en finestres de tres hores, normalitzades segons el consum diari. Aquesta transformació ajuda a capturar patrons intradia, que són crucials per diferenciar comportaments entre regions o dies. El conjunt de dades es transforma a un format ampli (wide format), que organitza els percentatges de consum per hores com a columnes, i es desa com un fitxer Parquet per aplicar-se a altres algoritmes. Aquest format facilita la introducció de les dades en algoritmes de clustering, proporcionant una representació clara de les tendències horàries i regionals.</p>
+        <p>Finalment, hem de tenir en compte les implicacions que té treballar amb el model K-means, els outliners afecten molt al agrupament de dades i disposar de massa de dimensions poden afectar al afegir soroll innecessari per al model, per aquest motiu apliquem una reducció de dimensionalitat (PCA).</p>
+        <p>En les visualitzacions següents es mostren 5 tipus d'escalat de dades, cada escalat s'ha probat amb un rang de 2 a 7 clusters i aplicant una reducció de dimensionalitat (PCA) de 2 a 5. Seleccionant els botons de la esquerra i movent el slider es pot ajustar la visualització de cada iteració de clustering. A la dreta es mostra la visualització t-SNE de cada nivell de clustering (tenint en compte la escala de PCA aplicada).</p>
+    </div>
+
+    <!-- Content container for images and buttons -->
+    <div class="content-container">
+        <!-- Button Container -->
+        <div class="button-container vertical" id="clusteringButtonContainer">
+            <!-- Buttons for clustering options will be dynamically created -->
+        </div>
+
+        <!-- Image container -->
+        <div class="image-container">
+            <img id="displayedImage" src="" alt="Displayed Image (Load Curve)" width="800">
+            <img id="tsneImage" src="" alt="TSNE Image" width="550">
+        </div>
+    </div>
+
+    <!-- Sliders below images -->
+    <div class="slider-container">
+        <div class="slider-wrapper">
+            <label for="imageSlider">Clusters:</label>
+            <input id="imageSlider" type="range" min="1" max="6" value="1">
+            <div class="slider-labels" id="sliderLabels"></div>
+        </div>
+        <div class="slider-wrapper">
+            <label for="pcaSlider">PCA:</label>
+            <input id="pcaSlider" type="range" min="2" max="5" value="2">
+            <div class="slider-labels" id="pcaLabels"></div>
+        </div>
+    </div>
+
+    <!-- Silhouette Container -->
+    <div class="silhouette-container">
+        <div class="content-text">
+            <p>S'han provat cinc tècniques d'escalat per comprovar els seus propòsits diferents, adaptades a la naturalesa de les dades:</p>
+            <ol>
+                <li>
+                    <strong>MinMaxScaler</strong>: Escala les dades a un rang fix, típicament [0, 1]. Això és útil per assegurar que totes les característiques contribueixen de manera igual al clustering, especialment quan s'utilitzen algorismes basats en distància com el KMeans, els quals són sensibles a la magnitud de les característiques.
+                </li>
+                <li>
+                    <strong>StandardScaler</strong>: Estandarditza les dades eliminant la mitjana i escalant-les a una variància unitària. Aquest mètode és efectiu quan les dades tenen una distribució similar a una normal, ja que centra les dades i facilita la identificació de clusters equilibrant l'escala de les característiques.
+                </li>
+                <li>
+                    <strong>RobustScaler</strong>: Escala les característiques basant-se en la mediana i el rang interquartílic, fet que el fa resistent als valors atípics. Això és especialment útil per a conjunts de dades com les corbes diàries de càrrega elèctrica, on els patrons de consum poden incloure anomalies o valors extrems que, d'una altra manera, distorsionarien el clustering.
+                </li>
+                <li>
+                    <strong>MaxAbsScaler</strong>: Escala les dades dividint-les pel valor absolut màxim de cada característica, mantenint l'escassetat de les dades. Això és útil per a conjunts de dades on les característiques representen proporcions o percentatges, com els valors de càrrega normalitzats.
+                </li>
+                <li>
+                    <strong>PowerTransformer</strong>: Aplica una transformació exponencial o logarítmica per fer que les dades siguin més similars a una distribució normal, reduint l'asimetria. Això és especialment útil per a dades amb distribucions molt asimètriques.
+                </li>
+            </ol>
+            <p>Tenint en compte els diferents tipus d'escalat utilitzats, podrem determinar com estan compostes les dades analitzades i quin escalat seria el més adient.</p>
+        </div>
+        
+        <div class="silhouette-image-container">
+            <img id="silhouetteImage" src="" alt="Silhouette Image" width="1000">
+        </div>
+    </div>
+
+    <div class="content-text">
+        <h3>Per què disminueix el coeficient de silueta a mesura que augmenten els clusters?</h3>
+        <p>El coeficient de silueta mesura com de ben definits i separats estan els clusters, equilibrant la cohesió dins dels clusters amb la separació entre clusters. Quan s'augmenta el nombre de clusters a KMeans (a partir de 3), el coeficient de silueta es veu molt reduït:</p>
+        <ul>
+            <li><strong>Sobreajustament dels clusters</strong>: Dividir les dades en més clusters pot provocar un sobreajustament, on els clusters esdevenen massa específics i no capturen agrupacions significatives.</li>
+            <li><strong>Rendiments decreixents</strong>: A partir d’un cert nombre de clusters, afegir-ne més no millora significativament la separació dels punts de dades, fet que provoca una disminució del coeficient de silueta.</li>
+        </ul>
+        <p>El pic en 3 clusters a les dades de consum elèctric probablement reflecteix una segmentació natural dels patrons diaris de càrrega. Aquest patró es repeteix en tots els tipus d'escalat, juntament amb el màxim del coeficient de silueta centrat en un nombre de 3 clusters. Més enllà d'això, dividir les dades encara més pot diluir aquests patrons i donar lloc a clusters menys significatius.</p>
+    
+        <h3>Per què una dimensionalitat baixa de PCA millora el coeficient de silueta?</h3>
+        <p>PCA redueix la dimensionalitat de les dades mentre preserva la variància d'aquestes, fet que facilita que els algorismes de clustering es concentrin en els aspectes més informatius de les dades. Per a les corbes de càrrega elèctrica, els components principals capturen variacions significatives en els patrons diaris, com els moments de màxim consum i la distribució general de la càrrega.</p>
+        <p>A més, PCA permet una reducció del soroll: excloure components menys rellevants elimina el soroll i les característiques redundants, fent que els clusters siguin més distintius. Això és molt notable amb dimensionalitats altes, on la visualització del t-SNE presenta cada cop més soroll entre els diferents tipus de clusters. En canvi, amb valors baixos, els clusters queden més organitzats facilitant al algorisme K-means un millor agrupament.</p>
+        <h3>Millors resultats</h3>
+        <p>Així doncs els millors resultats els podem basar en el coeficient obtingut en la silueta:</p>
+        <ol>
+            <li><strong>MaxAbsScaling</strong>: PCA 2 i Num. Clusters: 3 (0.46)</li>
+            <li><strong>ZNormScaling (StandardScaling)</strong>: PCA 2 i Num. Clusters: 3 (0.46)</li>
+            <li><strong>MinMaxScaling</strong>: PCA 2 i Num. Clusters: 2 (0.46)</li>
+            <li><strong>PowerTransformer</strong>: PCA 2 i Num. Clusters: 3 (0.44)</li>
+            <li><strong>RobustScaling</strong>: PCA 2 i Num. Clusters: 3 (0.42)</li>
+        </ol>
+        <p>En casi tots els tipus d'escalats trobem que el nombre de clusters óptim és 3, i com ja s'ha comentat anteriorment la reducció de dimensionalitat (PCA) la mantidrem en 2.</p>
+    </div>
+
+    <!-- Separator line across the screen -->
+    <div class="separator"></div>
+
+    <!-- Classification Results Section -->
+    <div class="classification-container">
+        <!-- Left box with image and classification scaling buttons -->
+        <div class="classification-box">
+            <img id="confusionMatrixImage" src="" alt="Confusion Matrix">
+            <div cclass="button-container horizontal" id="classificationScalingButtonsContainer">
+                <!-- Buttons for selecting classification scaling types will be dynamically created -->
+            </div>
+        </div>
+
+        <!-- Right box for displaying classification description -->
+        <div class="classification-description-container">
+            <div class="text-dialogue" id="classificationDescription">Classification description will be shown here.</div>
+        </div>
+    </div>
+    <script>
+        const clusteringScalingOptions = {
+            "MaxAbsScaling": "MaxAbsScaling",
+            "MinMaxScaling": "MinMaxScaling",
+            "RobustScaling": "RobustScaling",
+            "ZNormScaling": "ZNormScaling",
+            "PowerTransformerScaling": "PowerTransformerScaling"
+        };
+    
+        const classificationScalingOptions = {
+            "MaxAbsScaling": "MaxAbsScaling",
+            "RobustScaling": "RobustScaling",
+            "ZNormScaling": "ZNormScaling"
+        };
+    
+        const clusteringButtonContainer = document.getElementById("clusteringButtonContainer");
+        const classificationScalingButtonsContainer = document.getElementById("classificationScalingButtonsContainer");
+        const imageSlider = document.getElementById("imageSlider");
+        const pcaSlider = document.getElementById("pcaSlider");
+        const displayedImage = document.getElementById("displayedImage");
+        const tsneImage = document.getElementById("tsneImage");
+        const silhouetteImage = document.getElementById("silhouetteImage");
+        const commentTextArea = document.getElementById("commentTextArea");
+        const confusionMatrixImage = document.getElementById("confusionMatrixImage");
+    
+        let currentClusteringFolder = Object.keys(clusteringScalingOptions)[0];
+        let currentClassificationType = Object.keys(classificationScalingOptions)[0];
+        let currentImageIndex = 0;
+        let currentPCA = 2; // Default to PCA level 2
+    
+        // Function to create a button
+        function createButton(text, action) {
+            const button = document.createElement("button");
+            button.textContent = text;
+            button.onclick = action;
+            button.classList.add('button');
+            return button;
+        }
+    
+        // Function to add modular buttons to a container
+        function addButtonsToContainer(container, options, action) {
+            Object.keys(options).forEach(option => {
+                const button = createButton(option, () => {
+                    action(option);
+                    setSelectedButton(button, container);
+                });
+                container.appendChild(button);
+            });
+        }
+    
+        // Function to handle the button selection styling
+        function setSelectedButton(selectedButton, container) {
+            container.querySelectorAll('button').forEach(button => button.classList.remove('selected'));
+            selectedButton.classList.add('selected');
+        }
+    
+        // Create and add modular clustering scaling buttons dynamically
+        addButtonsToContainer(clusteringButtonContainer, clusteringScalingOptions, (folder) => {
+            currentClusteringFolder = folder;
+            updateClusteringImage();
+        });
+    
+        // Create and add modular classification scaling buttons dynamically
+        addButtonsToContainer(classificationScalingButtonsContainer, classificationScalingOptions, (scalingType) => {
+            // Update confusion matrix based on selected scaling type
+            updateConfusionMatrixImage(scalingType);
+        });
+    
+        // Function to update the clustering image based on current selected settings
+        function updateClusteringImage() {
+            const currentCluster = parseInt(imageSlider.value) + 1; // Adjust for the 0-indexed slider
+            const loadCurvePath = `../plots/kmeans/${currentClusteringFolder}/pca_${currentPCA}/load_curves_${currentCluster}.png`;
+            const tsnePath = `../plots/kmeans/${currentClusteringFolder}/pca_${currentPCA}/tsne_${currentCluster}.png`;
+            const silhouettePath = `../plots/kmeans/${currentClusteringFolder}/pca_${currentPCA}/silhouette.png`;
+    
+            displayedImage.src = loadCurvePath;
+            tsneImage.src = tsnePath;
+            silhouetteImage.src = silhouettePath;
+        }
+    
+        // Function to update the confusion matrix image based on scaling type
+        function updateConfusionMatrixImage(scalingType) {
+            confusionMatrixImage.src = `../plots/RandomForestClassifier/${scalingType}/confusion_matrix.png`;
+        }
+    
+        // Initialize with the default clustering option
+        updateClusteringImage();
+        updateConfusionMatrixImage("MaxAbsScaling");
+    
+        // Add event listener to the imageSlider to update the images when it changes
+        imageSlider.addEventListener('input', function() {
+            updateClusteringImage();
+        });
+    
+        // Add event listener to the pcaSlider to update the PCA images when it changes
+        pcaSlider.addEventListener('input', function() {
+            currentPCA = parseInt(pcaSlider.value); // Update PCA value from slider
+            updateClusteringImage(); // Re-render images based on new PCA
+        });
+    </script>    
+    
+</body>
+</html>

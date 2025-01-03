@@ -110,11 +110,13 @@ hyperparameter_ranges = {
         'model__max_depth': [20, 30, 40, 60],
         'model__min_samples_leaf': [10, 15, 20],
     },
+    # Best 100, 0.2 , 10
     "GradientBoosting": {
         'model__n_estimators': [100, 200, 300],
         'model__learning_rate': [0.1, 0.2],
         'model__max_depth': [10, 20, 30],
     },
+    # Best 300, 20 (Too resource intensive)
     "RandomForest": {
         'model__n_estimators': [100, 200, 300],
         'model__max_depth': [15, 20, 30],
