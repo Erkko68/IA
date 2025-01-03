@@ -33,7 +33,7 @@
             padding: 15px 25px;
             font-size: 18px;
             cursor: pointer;
-            background-color: #4CAF50;
+            background-color: #2342dd;
             color: white;
             border: none;
             border-radius: 5px;
@@ -45,11 +45,11 @@
 
 
         .button:hover {
-            background-color: #45a049;
+            background-color: #152a96;
         }
 
         .button.selected {
-            background-color: #357a38;
+            background-color: #101f69;
         }
 
         /* Button container for vertical or horizontal layout */
@@ -272,17 +272,69 @@
     </div>
 
     <!-- Classification Results Section -->
+    <div class="button-container horizontal" id="classificationScalingButtonsContainer">
+        <!-- Buttons for selecting classification scaling types will be dynamically created -->
+    </div>
+
     <div class="container">
         <!-- Left box with image and classification scaling buttons -->
         <div class="column">
-            <img id="confusionMatrixImage" width="600px" src="" alt="Confusion Matrix">
-            <div class="button-container horizontal" id="classificationScalingButtonsContainer">
-                <!-- Buttons for selecting classification scaling types will be dynamically created -->
+            <img id="gridSearchResults" width="600px" src="" alt="Grid Search Results">
+        </div>
+        <div class="column">
+            <img id="featureImportances" width="800px" src="" alt="Feature Importances">
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Left box with image and classification scaling buttons -->
+        <div class="column">
+            <div class="content-text">
+                <p>Hello</p>
             </div>
         </div>
         <div class="column">
-            <p>Hi.</p>
+            <div class="content-text">
+                <p>Hello</p>
+            </div>
         </div>
+    </div>
+
+    <!-- Classification Results Section -->
+    <div class="button-container horizontal" id="classificationMisclassifiedButtonsContainer">
+        <!-- Buttons for selecting classification scaling types will be dynamically created -->
+    </div>
+
+    <div class="container">
+        <!-- Left box with image and classification scaling buttons -->
+        <div class="column">
+            <img id="confusionMatrix" width="600px" src="" alt="Confusion Matrix">
+        </div>
+        <div class="column">
+            <img id="tsneMisclassifiedPoints" width="800px" src="" alt="t-SNE Misclassified Points">
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Left box with image and classification scaling buttons -->
+        <div class="column">
+            <div class="content-text">
+                <p>Hello</p>
+            </div>
+        </div>
+        <div class="column">
+            <div class="content-text">
+                <p>Hello</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Separator line across the screen -->
+    <div class="separator"></div>
+
+    <!-- Regression -->
+    <div class="header">
+        <div class="title">Regression: Electricity Consumption Short-term Forecast</div>
     </div>
 
     <script>
@@ -296,12 +348,13 @@
     
         const classificationScalingOptions = {
             "MaxAbsScaling": "MaxAbsScaling",
-            "RobustScaling": "RobustScaling",
-            "ZNormScaling": "ZNormScaling"
+            "ZNormScaling": "ZNormScaling",
+            "RobustScaling": "RobustScaling"
         };
     
         const clusteringButtonContainer = document.getElementById("clusteringButtonContainer");
         const classificationScalingButtonsContainer = document.getElementById("classificationScalingButtonsContainer");
+        const classificationMisclassifiedButtonsContainer = document.getElementById("classificationMisclassifiedButtonsContainer");
         const imageSlider = document.getElementById("imageSlider");
         const pcaSlider = document.getElementById("pcaSlider");
 
@@ -312,8 +365,12 @@
 
         const silhouetteKmeansImage = document.getElementById("silhouetteKmeansImage");
         const silhouetteHierarchicalImage = document.getElementById("silhouetteHierarchicalImage");
-        const commentTextArea = document.getElementById("commentTextArea");
-        const confusionMatrixImage = document.getElementById("confusionMatrixImage");
+
+        const gridSearchResults = document.getElementById("gridSearchResults");
+        const featureImportances = document.getElementById("featureImportances");
+
+        const confusionMatrix = document.getElementById("confusionMatrix");
+        const tsneMisclassifiedPoints = document.getElementById("tsneMisclassifiedPoints");
     
         let currentClusteringFolder = Object.keys(clusteringScalingOptions)[0];
         let currentClassificationType = Object.keys(classificationScalingOptions)[0];
@@ -355,7 +412,13 @@
         // Create and add modular classification scaling buttons dynamically
         addButtonsToContainer(classificationScalingButtonsContainer, classificationScalingOptions, (scalingType) => {
             // Update confusion matrix based on selected scaling type
-            updateConfusionMatrixImage(scalingType);
+            updateClassificationTrainingImage(scalingType);
+        });
+
+        // Create and add modular classification scaling buttons dynamically
+        addButtonsToContainer(classificationMisclassifiedButtonsContainer, classificationScalingOptions, (scalingType) => {
+            // Update confusion matrix based on selected scaling type
+            updateClassificationMissclassifiedImage(scalingType);
         });
     
         // Function to update the clustering image based on current selected settings
@@ -381,13 +444,20 @@
         }
     
         // Function to update the confusion matrix image based on scaling type
-        function updateConfusionMatrixImage(scalingType) {
-            confusionMatrixImage.src = `../plots/RandomForestClassifier/${scalingType}/confusion_matrix.png`;
+        function updateClassificationTrainingImage(scalingType) {
+            gridSearchResults.src = `../plots/RandomForestClassifier/${scalingType}/grid_search_results.png`;
+            featureImportances.src = `../plots/RandomForestClassifier/${scalingType}/feature_importances.png`;
+        }
+
+        function updateClassificationMissclassifiedImage(scalingType) {
+            confusionMatrix.src = `../plots/RandomForestClassifier/${scalingType}/confusion_matrix.png`;
+            tsneMisclassifiedPoints.src = `../plots/RandomForestClassifier/${scalingType}/tsne_misclassified_points.png`;
         }
     
         // Initialize with the default clustering option
         updateClusteringImage();
-        updateConfusionMatrixImage("MaxAbsScaling");
+        updateClassificationTrainingImage("MaxAbsScaling");
+        updateClassificationMissclassifiedImage("MaxAbsScaling");
     
         // Add event listener to the imageSlider to update the images when it changes
         imageSlider.addEventListener('input', function() {

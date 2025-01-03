@@ -100,9 +100,9 @@ preprocessor = ColumnTransformer(
 # ==================================
 
 models = {
-    "DecisionTree": DecisionTreeRegressor(),
+    #"DecisionTree": DecisionTreeRegressor(),
     "GradientBoosting": GradientBoostingRegressor(),
-    "RandomForest": RandomForestRegressor(),
+    #"RandomForest": RandomForestRegressor(),
 }
 
 hyperparameter_ranges = {
@@ -111,10 +111,10 @@ hyperparameter_ranges = {
         'model__min_samples_leaf': [10, 15, 20],
     },
     # Best 100, 0.2 , 10
+    # samples set to 100 by default
     "GradientBoosting": {
-        'model__n_estimators': [100, 200, 300],
         'model__learning_rate': [0.1, 0.2],
-        'model__max_depth': [10, 20, 30],
+        'model__max_depth': [10, 20],
     },
     # Best 300, 20 (Too resource intensive)
     "RandomForest": {
