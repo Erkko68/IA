@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
+            margin: 60px;
             padding: 0;
             display: flex;
             flex-direction: column;
@@ -18,7 +18,8 @@
         .header {
             color: black;
             text-align: left; /* Center the title */
-            padding: 30px 0; /* Add vertical padding */
+            margin-top: 30px; /* Add vertical padding */
+            margin-bottom: -30px;
         }
 
         /* Title Styling */
@@ -73,7 +74,6 @@
         .container {
             display: flex;
             justify-content: space-between;
-            align-items: center;
             margin: 10px 0;
             gap: 10px; /* Space between columns */
         }
@@ -82,18 +82,7 @@
             flex: 1;
             display: flex;
             justify-content: center;
-            align-items: center;
             box-sizing: border-box;
-            overflow: hidden; /* Prevents content overflow */
-        }
-
-        .img {
-            max-width: 70%;    /* Limits image width to the column width */
-            max-height: 70%;   /* Limits image height to the column height */
-        }
-
-        .img-wide {
-            max-width: 100%;       /* Allows the image to exceed column width */
         }
 
         /* Optional: If you want zero spacing between containers */
@@ -139,8 +128,8 @@
 
         .content-text {
             border-radius: 5px;
-            margin: 30px 60px;
-            font-size: 16px;
+            margin: 30px 30px;
+            font-size: 18px;
             text-align: justify;
         }
 
@@ -151,14 +140,21 @@
     <div class="header">
         <div class="title">Clustering: Common Daily Load Curves</div>
     </div>
-
-    <div class="content-text">
-        <p>Després de carregar les dades i convertirles al dataframe de polars, per tal de garantir un anàlisi precis en el temps, convertint els registres de temps a la zona horària local ("Europa/Madrid") i extraient els atributs corresponents de <code>hora</code> i <code>data</code>. Aquesta informació temporal és essencial per identificar patrons diaris, que són fonamentals per a les tècniques de clustering basades en comportaments temporals.</p>
-        <p>A continuació, les dades es classifiquen per <code>codi_postal</code> i <code>localtime</code> per facilitar les operacions de sèrie temporal i el càlcul de mètriques agregades. Es calculen estadístiques mòbils, incloent-hi la mitjana mòbil de 48 hores, la desviació estàndard i el 10è percentil en una finestra de 168 hores. Aquestes estadístiques ofereixen una perspectiva sobre les tendències locals de consum i ajuden a identificar variacions anòmales en el consum que podrien influir en la creació de clústers.</p>
-        <p>Les mètriques calculades s’integren al conjunt de dades original i es normalitzen utilitzant valors Z (Z-normalització), cosa que permet que els valors de consum es comparin de manera uniforme independentment de les diferències de magnitud entre codis postals, aquest aspecte é smolt important a l'hora de realitzar clustering amb la tècnica de K-means ja que aquest es veu molt influenciat per dades anòmales amb valors molt grans o molt petits. Es filtren els valors anòmals eliminant els registres amb consum zero (ja que no aporten informació rellevan) i aplicant llindars de normalització Z i quantils mòbils per eliminar soroll i destacar patrons significatius.</p>
-        <p>Seguidament, les dades es preparen per al clustering agregant percentatges de consum en finestres de tres hores, normalitzades segons el consum diari. Aquesta transformació ajuda a capturar patrons intradia, que són crucials per diferenciar comportaments entre regions o dies. El conjunt de dades es transforma a un format ampli (wide format), que organitza els percentatges de consum per hores com a columnes, i es desa com un fitxer Parquet per aplicar-se a altres algoritmes. Aquest format facilita la introducció de les dades en algoritmes de clustering, proporcionant una representació clara de les tendències horàries i regionals.</p>
-        <p>Finalment, hem de tenir en compte les implicacions que té treballar amb el model K-means, els outliners afecten molt al agrupament de dades i disposar de massa de dimensions poden afectar al afegir soroll innecessari per al model, per aquest motiu apliquem una reducció de dimensionalitat (PCA).</p>
-        <p>En les visualitzacions següents es mostren 5 tipus d'escalat de dades, cada escalat s'ha probat amb un rang de 2 a 7 clusters i aplicant una reducció de dimensionalitat (PCA) de 2 a 5. Seleccionant els botons de la esquerra i movent el slider es pot ajustar la visualització de cada iteració de clustering. A la dreta es mostra la visualització t-SNE de cada nivell de clustering (tenint en compte la escala de PCA aplicada).</p>
+    <div class="container">
+        <div class="column"> 
+            <div class="content-text">
+                <p>Després de carregar les dades i convertirles al dataframe de polars, per tal de garantir un anàlisi precis en el temps, convertint els registres de temps a la zona horària local ("Europa/Madrid") i extraient els atributs corresponents de <code>hora</code> i <code>data</code>. Aquesta informació temporal és essencial per identificar patrons diaris, que són fonamentals per a les tècniques de clustering basades en comportaments temporals.</p>
+                <p>A continuació, les dades es classifiquen per <code>codi_postal</code> i <code>localtime</code> per facilitar les operacions de sèrie temporal i el càlcul de mètriques agregades. Es calculen estadístiques mòbils, incloent-hi la mitjana mòbil de 48 hores, la desviació estàndard i el 10è percentil en una finestra de 168 hores. Aquestes estadístiques ofereixen una perspectiva sobre les tendències locals de consum i ajuden a identificar variacions anòmales en el consum que podrien influir en la creació de clústers.</p>
+                <p>Les mètriques calculades s’integren al conjunt de dades original i es normalitzen utilitzant valors Z (Z-normalització), cosa que permet que els valors de consum es comparin de manera uniforme independentment de les diferències de magnitud entre codis postals, aquest aspecte é smolt important a l'hora de realitzar clustering amb la tècnica de K-means ja que aquest es veu molt influenciat per dades anòmales amb valors molt grans o molt petits. Es filtren els valors anòmals eliminant els registres amb consum zero (ja que no aporten informació rellevan) i aplicant llindars de normalització Z i quantils mòbils per eliminar soroll i destacar patrons significatius.</p>        
+            </div>
+        </div>
+        <div class="column"> 
+            <div class="content-text">
+                <p>Seguidament, les dades es preparen per al clustering agregant percentatges de consum en finestres de tres hores, normalitzades segons el consum diari. Aquesta transformació ajuda a capturar patrons intradia, que són crucials per diferenciar comportaments entre regions o dies. El conjunt de dades es transforma a un format ampli (wide format), que organitza els percentatges de consum per hores com a columnes, i es desa com un fitxer Parquet per aplicar-se a altres algoritmes. Aquest format facilita la introducció de les dades en algoritmes de clustering, proporcionant una representació clara de les tendències horàries i regionals.</p>
+                <p>Finalment, hem de tenir en compte les implicacions que té treballar amb cada model. En el model K-means, els outliners afecten molt al agrupament de dades i disposar de massa de dimensions poden afectar al afegir soroll innecessari per al model, per aquest motiu apliquem una reducció de dimensionalitat (PCA). De forma similar podem utilitzar el PCA per al model hierarchical clustering i així obtenir divisions del conjunt de dades més precises</p>
+                <p>En les visualitzacions següents es mostren 5 tipus d'escalat de dades per cada model de clustering, cada escalat s'ha probat amb un rang de 2 a 7 clusters i aplicant una reducció de dimensionalitat (PCA) de 2 a 5. Seleccionant els botons de la esquerra i movent el slider es pot ajustar la visualització de cada iteració de clustering. Les tres primeres imatges (de esquerra a dreta) coresponen al K-means i mostren la curva identificada, la visualització t-SNE i el coeficient de silueta, a sota d'aquestes tres imatges trobem la mateixa estructura però amb el hierarchical cllustering on en compte d'utilitzar el t-SNE per la visualització s'ha utilitzat un dendograma per la seva natruralesa d'agrupar dades com si fos un arbre.</p>
+            </div>
+        </div>
     </div>
 
     <!-- Button Container -->
@@ -170,26 +166,26 @@
     <div class="container">
         <!-- Image container -->
         <div class="column">
-            <img id="loadCurveKmeansImg" class="img-wide" src="" alt="Displayed Image (Load Curve)">
+            <img id="loadCurveKmeansImg" width="600px" src="" alt="Displayed Image (Load Curve)">
         </div>
         <div class="column">
-            <img id="tsneImage" class="img" src="" alt="TSNE Visualization">
+            <img id="tsneImage" width="400px" src="" alt="TSNE Visualization">
         </div>
         <div class="column">
-            <img id="silhouetteKmeansImage" class="img-wide" src="" alt="Silhouette Image">
+            <img id="silhouetteKmeansImage" width="600px" src="" alt="Silhouette Image">
         </div>
     </div>
 
     <div class="container">
         <!-- Image container -->
         <div class="column">
-            <img id="loadCurveHierarchicalImg" class="img-wide" src="" alt="Displayed Image (Load Curve)">
+            <img id="loadCurveHierarchicalImg" width="600px" src="" alt="Displayed Image (Load Curve)">
         </div>
         <div class="column">
-            <img id="dendogramImage" class="img" src="" alt="Dendogram">
+            <img id="dendogramImage" width="600px" src="" alt="Dendogram">
         </div>
         <div class="column">
-            <img id="silhouetteHierarchicalImage" class="img-wide" src="" alt="Silhouette Image">
+            <img id="silhouetteHierarchicalImage" width="600px" src="" alt="Silhouette Image">
         </div>
     </div>
 
@@ -211,7 +207,7 @@
     <div class="container">
         <div class="column">
             <div class="content-text">
-                <p>S'han provat cinc tècniques d'escalat per comprovar els seus propòsits diferents, adaptades a la naturalesa de les dades:</p>
+                <p>S'han provat cinc tècniques d'escalat per cada tipus d'algorisme per comprovar els seus propòsits diferents, adaptades a la naturalesa de les dades:</p>
                 <ol>
                     <li><strong>MinMaxScaler</strong>: Escala les dades a un rang fix, típicament [0, 1]. Això és útil per assegurar que totes les característiques contribueixen de manera igual al clustering, especialment quan s'utilitzen algorismes basats en distància com el KMeans, els quals són sensibles a la magnitud de les característiques.</li>
                     <li><strong>StandardScaler</strong>: Estandarditza les dades eliminant la mitjana i escalant-les a una variància unitària. Aquest mètode és efectiu quan les dades tenen una distribució similar a una normal, ja que centra les dades i facilita la identificació de clusters equilibrant l'escala de les característiques.</li>
@@ -226,17 +222,18 @@
                     <li><strong>Sobreajustament dels clusters</strong>: Dividir les dades en més clusters pot provocar un sobreajustament, on els clusters esdevenen massa específics i no capturen agrupacions significatives.</li>
                     <li><strong>Rendiments decreixents</strong>: A partir d’un cert nombre de clusters, afegir-ne més no millora significativament la separació dels punts de dades, fet que provoca una disminució del coeficient de silueta.</li>
                 </ul>
+                <p>Es va observar com el nombre de clusters continuava disminuint a partir de 7 clusters, per aquest es motiu es va definir el rang de 2 a 7 clusters. De forma similar, tenint en compte que el màxim de dimensions que tenim en el nostre dataset es d'un total de 8, i a partir d'una dimensionalitat de 5, els resultats eren molt similars es va reduir el rang del PCA de 2 a 5.</p>
             </div>
         </div>
         <div class="column">
             <div class="content-text">
-                <p>El pic en 3 clusters a les dades de consum elèctric probablement reflecteix una segmentació natural dels patrons diaris de càrrega. Aquest patró es repeteix en tots els tipus d'escalat, juntament amb el màxim del coeficient de silueta centrat en un nombre de 3 clusters. Més enllà d'això, dividir les dades encara més pot diluir aquests patrons i donar lloc a clusters menys significatius.</p>
+                <p>El pic en 3 clusters a les dades de consum elèctric probablement reflecteix una segmentació natural dels patrons diaris de càrrega. Aquest patró es repeteix en els dos models de clustering i en tots els tipus d'escalat, juntament amb el màxim del coeficient de silueta centrat en un nombre de 3 clusters. Més enllà d'això, dividir les dades encara més pot diluir aquests patrons i donar lloc a clusters menys significatius.</p>
             
                 <h3>Per què una dimensionalitat baixa de PCA millora el coeficient de silueta?</h3>
                 <p>PCA redueix la dimensionalitat de les dades mentre preserva la variància d'aquestes, fet que facilita que els algorismes de clustering es concentrin en els aspectes més informatius de les dades. Per a les corbes de càrrega elèctrica, els components principals capturen variacions significatives en els patrons diaris, com els moments de màxim consum i la distribució general de la càrrega.</p>
-                <p>A més, PCA permet una reducció del soroll: excloure components menys rellevants elimina el soroll i les característiques redundants, fent que els clusters siguin més distintius. Això és molt notable amb dimensionalitats altes, on la visualització del t-SNE presenta cada cop més soroll entre els diferents tipus de clusters. En canvi, amb valors baixos, els clusters queden més organitzats facilitant al algorisme K-means un millor agrupament.</p>
+                <p>A més, PCA permet una reducció del soroll: excloure components menys rellevants elimina el soroll i les característiques redundants, fent que els clusters siguin més distintius. Això és molt notable amb dimensionalitats altes, on la visualització del t-SNE presenta cada cop més soroll entre els diferents tipus de clusters. En canvi, amb valors baixos, els clusters queden més organitzats facilitant al algorisme K-means un millor agrupament. En el cas del hierarchical clustering la distribució del nombre total punts de dades d'una fulla a una latra es veu bastant afectada en funció de grau de PCA seleccionat.</p>
                 <h3>Millors resultats</h3>
-                <p>Així doncs els millors resultats els podem basar en el coeficient obtingut en la silueta:</p>
+                <p>Així doncs els millors resultats els podem basar en el coeficient obtingut en la silueta. Encara que els resultats entre models no han variat per molta diferència, de mitjana l'algorisme K-means ha rendit millor que el hierarchical clustering en aquest coeficient i per tant serà el model utilitzat en posteriors algorismes. En el rànking de millors resultats amb diferents tipus d'escalat tenim:</p>
                 <ol>
                     <li><strong>MaxAbsScaling</strong>: PCA 2 i Num. Clusters: 3 (0.46)</li>
                     <li><strong>ZNormScaling (StandardScaling)</strong>: PCA 2 i Num. Clusters: 3 (0.46)</li>
@@ -258,19 +255,28 @@
     </div>
 
     <!--Introduction-->
-    <div class="content-text">
-        <p>En aquest apartat estarem gestionant diversos conjunts de dades que proporcionen un context important per a l'anàlisi de la carga electrica. Aquests conjunts de dades inclouen dades de <strong>consum</strong>, que detallen l'ús d'electricitat, dades de <strong>temps</strong> amb factors ambientals com la temperatura i la humitat, dades <strong>socioeconòmiques</strong> per entendre la demografia de les regions, i dades de <strong>cadastre</strong> per a informació sobre els edificis, com el nombre d'habitatges i les seves condicions. A més, es fa servir dades de <strong>codi postal</strong> per aportar context espacial a l'anàlisi de patrons regionals.</p>
-        <p>Abans d'entrenar els models de classificació necessitem processar les dades, partint de les dades de consum electric del apartat de clustering, netegem i transformem les dades del cadastre i del codi postal, assegurant la consistència dels noms de les columnes i l'alineació espacial, especialment quan associem els edificis als codis postals. Les dades meteorològiques es transformen per ser agregades de manera diària, centrant-nos en factors rellevants com la temperatura ambiental, la humitat i la radiació solar, que podrien influir en els patrons de consum d'electricitat. Després del preprocessament, les dades estan llestes per a l'escalat i el clustering.</p>
-        <p>El procés d'escalat és clau per normalitzar les dades abans de l'anàlisi posterior. Partint del apartat de clustering ens centrarem en aquells tipus d'escalat que ens aportat millors resultats, s'apliquen tres tipus d'escalat: <strong>ZNormScaling</strong>, <strong>MaxAbsScaling</strong> i <strong>RobustScaling</strong>, cadascun transformant les dades per tenir una varietat de resultats. S'ha escollit <strong>RobustScaling</strong> ja que és dels pocs tipus d'escalat que en la fase de clustering ens ha aportat un coeficient de silueta elevat utilitzant un nombre de clusters més grans que 3, i per aquest motiu l'utilitzarem per comprobar alguna correlació amb el nombre de clusters i la capacitat de classificació, els altres dos tipus d'escalat els mantidnrem en 3 clusters. També es realitza <strong>PCA (Principal Component Analysis)</strong> per reduir la dimensionalitat abans del clustering, cosa que ajuda a visualitzar els resultats en un espai 2D.</p>
-        <p>Finalment, l'anàlisi inclou la classificació i l'evaluació del model. Es fa servir un <strong>Random Forest Classifier</strong> que s'entrena amb les dades agrupades, juntament amb altres característiques derivades dels conjunts de dades combinats, com l'estat socioeconòmic, els patrons meteorològics i la informació del cadastre. El rendiment del model es valora mitjançant mètriques d'exactitud i matrius de confusió, i també es visualitzen les importàncies de les característiques per entendre quines variables contribueixen més a les prediccions del model. A més, s'aplica <strong>t-SNE</strong> per visualitzar com els clústers i les classificacions incorrectes s'alineen, proporcionant informació sobre el procés de classificació. Aquestes visualitzacions, juntament amb l'anàlisi de les importàncies de les característiques, ens permeten entendre millor les relacions entre les dades i les prediccions del model.</p>            
+    <div class="container">
+        <div class="column">
+            <div class="content-text">
+                <p>En aquest apartat estarem gestionant diversos conjunts de dades que proporcionen un context important per a l'anàlisi de la carga electrica. Aquests conjunts de dades inclouen dades de <strong>consum</strong>, que detallen l'ús d'electricitat, dades de <strong>temps</strong> amb factors ambientals com la temperatura i la humitat, dades <strong>socioeconòmiques</strong> per entendre la demografia de les regions, i dades de <strong>cadastre</strong> per a informació sobre els edificis, com el nombre d'habitatges i les seves condicions. A més, es fa servir dades de <strong>codi postal</strong> per aportar context espacial a l'anàlisi de patrons regionals.</p>
+                <p>Abans d'entrenar els models de classificació necessitem processar les dades, partint de les dades de consum electric del apartat de clustering, netegem i transformem les dades del cadastre i del codi postal, assegurant la consistència dels noms de les columnes i l'alineació espacial, especialment quan associem els edificis als codis postals. Les dades meteorològiques es transformen per ser agregades de manera diària, centrant-nos en factors rellevants com la temperatura ambiental, la humitat i la radiació solar, que podrien influir en els patrons de consum d'electricitat. Després del preprocessament, les dades estan llestes per a l'escalat i el clustering.</p>
+                <p>S'ha escollit <strong>RobustScaling</strong> ja que és dels pocs tipus d'escalat que en la fase de clustering ens ha aportat un coeficient de silueta elevat utilitzant un nombre de clusters més grans que 3, i per aquest motiu l'utilitzarem per comprobar alguna correlació amb el nombre de clusters i la capacitat de classificació, els altres dos tipus d'escalat els mantidnrem en 3 clusters. També es realitza <strong>PCA (Principal Component Analysis)</strong> per reduir la dimensionalitat abans del clustering, cosa que ajuda a visualitzar els resultats en un espai 2D.</p>
+            </div>
+        </div>
+        <div class="column">
+            <div class="content-text">
+                <p>El procés d'escalat és clau per normalitzar les dades abans de l'anàlisi posterior. Partint del apartat de clustering ens centrarem en aquells tipus d'escalat que ens aportat millors resultats, s'apliquen tres tipus d'escalat: <strong>ZNormScaling</strong>, <strong>MaxAbsScaling</strong> i <strong>RobustScaling</strong>, cadascun transformant les dades per tenir una varietat de resultats.</p>
+                <p>Finalment, l'anàlisi inclou la classificació i l'evaluació del model. Es fa servir un <strong>Random Forest Classifier</strong> que s'entrena amb les dades agrupades, juntament amb altres característiques derivades dels conjunts de dades combinats, com l'estat socioeconòmic, els patrons meteorològics i la informació del cadastre. El rendiment del model es valora mitjançant mètriques d'exactitud i matrius de confusió, i també es visualitzen les importàncies de les característiques per entendre quines variables contribueixen més a les prediccions del model. A més, s'aplica <strong>t-SNE</strong> per visualitzar com els clústers i les classificacions incorrectes s'alineen, proporcionant informació sobre el procés de classificació. Aquestes visualitzacions, juntament amb l'anàlisi de les importàncies de les característiques, ens permeten entendre millor les relacions entre les dades i les prediccions del model.</p>            
+            </div>
+        </div>
     </div>
 
     <!-- Classification Results Section -->
     <div class="container">
         <!-- Left box with image and classification scaling buttons -->
         <div class="column">
-            <img id="confusionMatrixImage" src="" alt="Confusion Matrix">
-            <div cclass="button-container horizontal" id="classificationScalingButtonsContainer">
+            <img id="confusionMatrixImage" width="600px" src="" alt="Confusion Matrix">
+            <div class="button-container horizontal" id="classificationScalingButtonsContainer">
                 <!-- Buttons for selecting classification scaling types will be dynamically created -->
             </div>
         </div>
@@ -278,7 +284,6 @@
             <p>Hi.</p>
         </div>
     </div>
-
 
     <script>
         const clusteringScalingOptions = {
