@@ -1,0 +1,27 @@
+S'han probat cinc tècniques d'escalat per comprobar els seus propòsits diferents, adaptades a la naturalesa de les dades:
+
+1. **MinMaxScaler**: Escala les dades a un rang fix, típicament [0, 1]. Això és útil per assegurar que totes les característiques contribueixen de manera igual al clustering, especialment quan s'utilitzen algorismes basats en distància com el KMeans, els quals són sensibles a la magnitud de les característiques.
+
+2. **StandardScaler**: Estandarditza les dades eliminant la mitjana i escalant-les a una variància unitària. Aquest mètode és efectiu quan les dades tenen una distribució similar a una normal, ja que centra les dades i facilita la identificació de clusters equilibrant l'escala de les característiques.
+
+3. **RobustScaler**: Escala les característiques basant-se en la mediana i el rang interquartílic, fet que el fa resistent als valors atípics. Això és especialment útil per a conjunts de dades com les corbes diàries de càrrega elèctrica, on els patrons de consum poden incloure anomalies o valors extrems que, d'una altra manera, distorsionarien el clustering.
+
+4. **MaxAbsScaler**: Escala les dades dividint-les pel valor absolut màxim de cada característica, mantenint l'escassetat de les dades. Això és útil per a conjunts de dades on les característiques representen proporcions o percentatges, com els valors de càrrega normalitzats.
+
+5. **PowerTransformer**: Aplica una transformació exponencial o logarítmica per fer que les dades siguin més similars a una distribució normal, reduint l'asimetria. Això és especialment útil per a dades amb distribucions molt asimètriques.
+
+Tenint en compte els diferents tipus d'escalat utilitzats podrem determinar com estan composades les dades analitzades i determinar quin escalat seria el més adient.
+
+### Per què disminueix el coeficient de silueta a mesura que augmenten els clusters?
+
+El coeficient de silueta mesura com de ben definits i separats estan els clusters, equilibrant la cohesió dins dels clusters amb la separació entre clusters. Quan s'augmenta el nombre de clusters a KMeans (a partir de 3), el coeficient de silueta es veu molt reduit:
+
+- **Sobreajustament dels clusters**: Dividir les dades en més clusters pot provocar un sobreajustament, on els clusters esdevenen massa específics i no capturen agrupacions significatives.
+- **Rendiments decreixents**: A partir d’un cert nombre de clusters, afegir-ne més no millora significativament la separació dels punts de dades, fet que provoca una disminució del coeficient de silueta.
+
+El pic en 3 clusters a les dades de consum elèctric probablement reflecteix una segmentació natural dels patrons diaris de càrrega, aquest patró es repeteix en tots els tipus d'escalat juntament amb el màxim del coeficient de silueta que es centra en un nombre de 3 clusters. Més enllà d'això, dividir les dades encara més pot diluir aquests patrons i donar lloc a clusters menys significatius.
+
+### Per què una dimensionalitat baixa de PCA millora el coeficient de silueta?
+
+PCA redueix la dimensionalitat de les dades mentre preserva la variància d'aquestes, fet que facilita que els algorismes de clustering es concentrin en els aspectes més informatius de les dades. Per a les corbes de càrrega elèctrica, els components principals capturen variacions significatives en els patrons diaris, com els moments de màxim consum i la distribució general de la càrrega.
+A més PCA ens permet una reducció del soroll, excloure components menys rellevants elimina el soroll i les característiques redundants, fent que els clusters siguin més distintius. Aixó es molt notable amb dimensionalitats altes on en la visualització del t-SNE cada cop apareix amb més soroll entre els diferents tipus de clusters. Mentres que amb valors baixos queden més organitzats.
