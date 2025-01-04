@@ -528,13 +528,13 @@
         <div class="column">
             <div class="content-text">
                 <p>Una bona forma de mesurar la precisió del model és mitjançant la ResidualPlot, que mostra la diferència entre els valors reals i els predits (els residus). Quan els punts estan més a prop de l’eix horitzontal, el model té una millor capacitat predictiva. Però a mesura que l’horitzó de predicció s’allarga, els residus tendiran a augmentar, la qual cosa indica que el model es desvia més dels valors reals a mesura que s’allunya del moment actual.</p>
+                <p>En les prediccions a llarg termini, és comú que els models de sèries temporals experimentin un augment de la incertesa, ja que els patrons es basen en extrapolacions i petits errors poden acumular-se. A mesura que augmenta el nombre de prediccions, els errors també poden créixer, ja que el model s’ha d’enfrontar a la dificultat de predir patrons futurs basats en dades passades. Aquesta incertesa s'intensifica a mesura que el model intenta predir a horitzons temporals més llargs.</p>
             </div>
         </div>
         <div class="column">
             <div class="content-text">
-                <p>En les prediccions a llarg termini, és comú que els models de sèries temporals experimentin un augment de la incertesa, ja que els patrons es basen en extrapolacions i petits errors poden acumular-se. A mesura que augmenta el nombre de prediccions, els errors també poden créixer, ja que el model s’ha d’enfrontar a la dificultat de predir patrons futurs basats en dades passades. Aquesta incertesa s'intensifica a mesura que el model intenta predir a horitzons temporals més llargs.</p>
-                <p>Observem com el model amb millors resultats és el RandomForest encara que com a la resta de models a mesura que augmentem els valors predits, cada vegada s'allunyen més dels valors reals.</p>
-                <p>Si vulguessim obtenir millors resultats a llarg termini es podrien utilitzar models més avançats en series temporals com per exemple xarxes neuronals recurrents (RNN) o transformadors, que gestionen bé les dependències a llarg termini, com que l'objectiu de la pràctica solament es amb models de regressió tampoc cal complicar-nos amb models més avançants.</p>
+                <p>Observem com el model amb millors resultats és el Random Forest, tot i que com la resta de models, a mesura que augmentem els valors predits, aquests es van allunyant més dels valors reals. En canvi, els valors predits més pròxims estan bastant més agrupats al voltant del eix horitzontal, començant a disperar-se més a partir dels 2000 valors predits.</p>
+                <p>Si volguéssim obtenir millors resultats a llarg termini, es podrien utilitzar models més avançats en sèries temporals com xarxes neuronals recurrents (RNN) o transformadors, que gestionen bé les dependències a llarg termini. Tanmateix, com que l'objectiu de la pràctica es limita als models de regressió, no cal complicar-nos amb models més avançats.</p>
             </div>
         </div>
     </div>    
@@ -575,6 +575,62 @@
             </div>
         </div>
     </div>
+
+    <div class="container">
+        <div class="column">
+            <div class="title">RandomForest</div>
+            <img width="800px" src="../plots/Regression/RandomForest/residual_plot.png" alt="RandomForest residual_plot">
+        </div>
+        <div class="column">
+            <div class="title">RandomForest Subset</div>
+            <img width="800px" src="../plots/Regression/RandomForest/residual_plot_subset.png" alt="RandomForest residual_plot_subset">
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="column">
+            <img width="800px" src="../plots/Regression/RandomForest/cv_performance.png" alt="RandomForest cv_performance">
+        </div>
+        <div class="column">
+            <img width="800px" src="../plots/Regression/RandomForest/cv_performance_subset.png" alt="RandomForest cv_performance_subset">
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="column">
+            <div class="content-text">
+                <p>Tornant a entrenar el model RandomForest amb un subconjunt de les dades més influeints veiem que no ens ha aportat avantatges, en el residuals plot de la dreta observem com perd precisió a l'hora de predir els valors inicials. Al haver eliminat bastants conjunts de dades, possiblement, encara que petits, eren importants a l'hora de predir les curves horaries.</p>
+            </div>
+        </div>
+        <div class="column">
+            <div class="content-text">
+                <p>Un altre tipus de visualització utilitzat és el Cross Validation Performance, on es mostra un rang de la puntuació obtinguda per aquell conjunt d'hiperparàmetres, al utilitzar el subset de dades solament s'ha utilitzat els millors hiperparàmetres obtinguts anteriorment. Si ho comparem amb el index d'hiperparàmetres número 5, veiem com perdem fins a 10000 punts i en consecuència capacitat de predicció del model.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Separator line across the screen -->
+    <div class="separator"></div>
+
+    <!-- Classification -->
+    <div class="header">
+        <div class="title">Observacions i Conclusions finals</div>
+    </div>
+
+    <div class="container">
+        <div class="column">
+            <div class="content-text">
+                <p>Finalment, una recapitualció sobre els millors models utilitzats. El K-Means, conjuntament amb PCA, ha permès agrupar tendències de càrrega elèctrica amb bastanta precisió (un coeficient de silueta d’uns ~0.5 en els millors casos). Utilitzant algorismes de classificació, hem vist com els diferents tipus de característiques aporten més valor que altres a l’hora de classificar patrons de consum, i com aquests estan molt influenciats pel soroll de les dades. Finalment, els models de regressió han permès provar tres models diferents, destacant el RandomForest qui ha obtingut unes millors mètriques de predicció. Tot i el cost computacional elevat (i mida del model), han servit per predir de manera força precisa les corbes elèctriques.</p>
+                <p>També es volie comentar el cost d'executar cada model, els millors models s'han guardat a disc per poder carregar-los i utilitzar-los posteriorment sense necessitat de tornar-los a entrenar. Si mirem les mides de cada model passem de 4MB pel DecisionTree, 15MB pel GradientBoosting i 8GB pel RandomForest. Si fessim una relació cost d'execució i capacitat de predicció el millor seria el GradientBoosting, però si busquem certesa en les dades predites ens quedariem amb el RandomForest.</p>
+            </div>
+        </div>
+        <div class="column">
+            <div class="content-text">
+                <p>Volia acabar aquest document amb una petita revisió final sobre tot el projecte. En general, no s’ha realitzat un treball molt extens en el processament de les dades d’entrada més que les del codi base, afegint alguna exclusió de dades com els consums de 0 o ajustant les hores d’aggregació. Es va intentar utilitzar altres formes d’agrupament o organització, però en general, el codi de base ja servia com un bon punt de partida per realitzar la resta de la pràctica. Tot i això, m’hauria agradat haver estat més capaç en el processament d’aquestes dades.</p>
+                <p>M’hagués agradat més realitzar una cerca més intensiva en els hiperparàmetres dels models de regressió, sobretot amb models més potents com el Random Forest o el Gradient Boosting. Tot i que disposo d’un ordinador força potent, seguia tenint moltes limitacions de computació i memòria per provar. Tot i així, pel nivell d’aquest anàlisi, considero que les dades aportades ja són suficients per l’objectiu d’aquesta pràctica.</p>
+            </div>
+        </div>
+    </div>    
     
     <script>
         const clusteringScalingOptions = {
