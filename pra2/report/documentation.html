@@ -534,6 +534,7 @@
             <div class="content-text">
                 <p>En les prediccions a llarg termini, és comú que els models de sèries temporals experimentin un augment de la incertesa, ja que els patrons es basen en extrapolacions i petits errors poden acumular-se. A mesura que augmenta el nombre de prediccions, els errors també poden créixer, ja que el model s’ha d’enfrontar a la dificultat de predir patrons futurs basats en dades passades. Aquesta incertesa s'intensifica a mesura que el model intenta predir a horitzons temporals més llargs.</p>
                 <p>Observem com el model amb millors resultats és el RandomForest encara que com a la resta de models a mesura que augmentem els valors predits, cada vegada s'allunyen més dels valors reals.</p>
+                <p>Si vulguessim obtenir millors resultats a llarg termini es podrien utilitzar models més avançats en series temporals com per exemple xarxes neuronals recurrents (RNN) o transformadors, que gestionen bé les dependències a llarg termini, com que l'objectiu de la pràctica solament es amb models de regressió tampoc cal complicar-nos amb models més avançants.</p>
             </div>
         </div>
     </div>    
@@ -570,7 +571,7 @@
                     <li>Experimentar amb tècniques de selecció de característiques, com ara l'eliminació recursiva de característiques (RFE) o models de regularització com Lasso.</li>
                     <li>Reentrenar els models amb subsets de dades seleccionades per confirmar l'impacte de cada característica en el rendiment global.</li>
                 </ul>
-                <p>Es va intentar realitzar l'eliminació recursiva de característiques (RFE) amb el model RandomForest pero resultava massa intensiva i requeria massa hores de cómput. Per aquest motiu es va probar directament utilitzar un subset amb les característiques més importants.</p>
+                <p>Es va intentar realitzar l'eliminació recursiva de característiques (RFE) amb el model RandomForest pero resultava massa intensiva i requeria massa hores de cómput. Per aquest motiu es va probar directament utilitzar un subset amb les característiques més importants i comprobar si el model seria capaç de millorar.</p>
             </div>
         </div>
     </div>

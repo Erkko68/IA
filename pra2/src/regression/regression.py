@@ -71,6 +71,11 @@ all_data_hourly = (
 # Define features and target
 X = all_data_hourly.drop(['localtime', 'time', 'consumption_filtered', 'consumption'], axis=1)
 X = X[~pd.isna(all_data_hourly.consumption_filtered)]
+
+# Important Features Subset
+X = X[['contracts', 'hvegetationratio', 'airtemperature', 'households', 
+       'sunazimuth', 'builtarea', 'population', 'hour', 'weekday']]
+
 y = all_data_hourly['consumption_filtered']
 y = y[~pd.isna(all_data_hourly.consumption_filtered)]
 
@@ -116,7 +121,7 @@ hyperparameter_ranges = {
         'model__learning_rate': [0.1, 0.2],
         'model__max_depth': [10, 20],
     },
-    # Best 300, 20 (Too resource intensive)
+    # Best 300, 30 (Too resource intensive)
     "RandomForest": {
         'model__n_estimators': [100, 200, 300],
         'model__max_depth': [15, 20, 30],
@@ -163,7 +168,7 @@ def evaluate_regression_model(
 
     # Save the trained model to a file
     os.makedirs(MODEL_PATH, exist_ok=True)
-    joblib.dump(best_pipeline, f"{MODEL_PATH}{model_name}_best_model.pkl")
+    joblib.dump(best_pipeline, f"{MODEL_PATH}{model_name}_best_model_subset.pkl")
 
     # ============================
     # Visualizations
@@ -180,7 +185,7 @@ def evaluate_regression_model(
         plt.title(f"{model_name} - Feature Importances")
         plt.xlabel("Importance")
         plt.ylabel("Features")
-        plt.savefig(f"{PLOT_DIR}{model_name}/feature_importances.png", format="png", dpi=300) 
+        plt.savefig(f"{PLOT_DIR}{model_name}/feature_importances_subset.png", format="png", dpi=300) 
     else:
         # Permutation importance (generic for all models)
         result = permutation_importance(best_pipeline, X_test, y_test, n_repeats=10, random_state=0, scoring='neg_mean_squared_error')
@@ -190,7 +195,7 @@ def evaluate_regression_model(
         plt.title(f"{model_name} - Permutation Importances")
         plt.xlabel("Mean Importance")
         plt.ylabel("Features")
-        plt.savefig(f"{PLOT_DIR}{model_name}/permutation_importances.png", format="png", dpi=300) 
+        plt.savefig(f"{PLOT_DIR}{model_name}/permutation_importances_subset.png", format="png", dpi=300) 
     
     # Residuals plot
     residuals = y_test - y_pred
@@ -200,7 +205,7 @@ def evaluate_regression_model(
     plt.title(f"{model_name} - Residuals Plot")
     plt.xlabel("Predicted Values")
     plt.ylabel("Residuals")
-    plt.savefig(f"{PLOT_DIR}{model_name}/residual_plot.png", format="png", dpi=300) 
+    plt.savefig(f"{PLOT_DIR}{model_name}/residual_plot_subset.png", format="png", dpi=300) 
 
     # Learning curve
     train_sizes, train_scores, test_scores = learning_curve(
@@ -216,7 +221,7 @@ def evaluate_regression_model(
     plt.xlabel("Training Set Size")
     plt.ylabel("RMSE")
     plt.legend()
-    plt.savefig(f"{PLOT_DIR}{model_name}/learning_curve.png", format="png", dpi=300) 
+    plt.savefig(f"{PLOT_DIR}{model_name}/learning_curve_subset.png", format="png", dpi=300) 
 
     # Grid Search Heatmap (Validation curve for all the hyperparameters)
     keys = list(hyperparameter_ranges.keys())
@@ -234,7 +239,7 @@ def evaluate_regression_model(
         plt.title(f"{model_name} - Grid Search Heatmap ({param1} vs {param2})")
         plt.xlabel(param2)
         plt.ylabel(param1)
-        plt.savefig(f"{PLOT_DIR}{model_name}/grid_search_heatmap.png", format="png", dpi=300)
+        plt.savefig(f"{PLOT_DIR}{model_name}/grid_search_heatmap_subset.png", format="png", dpi=300)
 
     # Model Performance Across CV Folds
     results = pd.DataFrame(grid_search.cv_results_)
@@ -247,7 +252,7 @@ def evaluate_regression_model(
     plt.xlabel("Hyperparameter Set Index")
     plt.ylabel("Mean Test Score")
     plt.grid()
-    plt.savefig(f"{PLOT_DIR}{model_name}/cv_performance.png", format="png", dpi=300)
+    plt.savefig(f"{PLOT_DIR}{model_name}/cv_performance_subset.png", format="png", dpi=300)
 
 '''
 for model_name, model in models.items():
