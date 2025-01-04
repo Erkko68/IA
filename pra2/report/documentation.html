@@ -271,11 +271,6 @@
         </div>
     </div>
 
-    <!-- Classification Results Section -->
-    <div class="button-container horizontal" id="classificationScalingButtonsContainer">
-        <!-- Buttons for selecting classification scaling types will be dynamically created -->
-    </div>
-
     <div class="container">
         <div class="column">
             <img id="gridSearchResults" width="600px" src="" alt="Grid Search Results">
@@ -285,22 +280,27 @@
         </div>
     </div>
 
+    <!-- Classification Results Section -->
+    <div class="button-container horizontal" id="classificationScalingButtonsContainer">
+        <!-- Buttons for selecting classification scaling types will be dynamically created -->
+    </div>
+
     <div class="container">
         <div class="column">
             <div class="content-text">
-                <p>Hello</p>
+                <p>Per trobar els valors òptims dels hiperparàmetres, s'ha utilitzat un enfocament de <strong>GridSearch</strong>, comprovant diferents nombres d'estimadors i profunditats del model. A més, s'ha aplicat <strong>Cross-Validation</strong> al conjunt de dades de <em>training</em> i <em>testing</em> per identificar el model més adequat dins d'aquest conjunt de dades.</p>
+                <p>A la imatge de l'esquerra es poden observar els resultats del <strong>GridSearch</strong> representats en un <em>HeatMap</em>. Les components horitzontals mostren el nombre d'estimadors utilitzats, mentre que les verticals representen la profunditat del model. En tots els tipus d'escalat de dades, es pot observar que a partir d'una profunditat superior a 20 no s'obté cap avantatge significatiu. De manera similar, es veu que amb qualsevol nombre d'estimadors s'obtenen resultats similars. Per tant, per optimitzar el model, es poden utilitzar hiperparàmetres més baixos i, en conseqüència, menys costosos en termes de processament, amb una profunditat de 20 i un nombre d'estimadors de 200.</p>
+                <p>En aquest <em>HeatMap</em>, s'ha provat l'escalat <strong>RobustScaling</strong> amb 7 clústers. Si analitzem el coeficient de silueta d'aquest tipus d'escalat, observem que sobresurt respecte als altres. Això ha motivat la seva utilització per comprovar altres dades i identificar tendències que podrien quedar ocultes si sempre s'utilitza el mateix nombre de clústers.</p>                
             </div>
         </div>
         <div class="column">
             <div class="content-text">
-                <p>Hello</p>
+                <p>És important conèixer quines característiques ha utilitzat el model de classificació per determinar a quin clúster correspon cada punt de dades. A la imatge de la dreta es pot observar un rànquing de les característiques, ordenades de més importants a menys importants. En els escalats <strong>MaxAbsScaling</strong> i <strong>ZNormScaling</strong>, es veuen tendències molt similars, destacant el dia de la setmana com la característica més rellevant. Segueixen els elements mediambientals, com era d'esperar, amb factors com la temperatura i la humitat de l'aire. Aquestes variables estan fortament relacionades, ja que una major humitat s'associa sovint a dies de pluja o boira, que poden requerir l'encesa de llums o l'ús de la calefacció.</p>
+                <p>A més, altres dades socioeconòmiques també juguen un paper clau en aquesta classificació. Entre elles, el nombre d'habitatges, urbanitzacions i la densitat de població esdevenen factors significatius, complementant les característiques mediambientals en la determinació dels clústers.</p>
+                <p>Curiosament, a mesura que incrementem el nombre de clústers (com en el cas de l'escalat <strong>RobustScaling</strong>), s'observa que les característiques més importants es concentren en les dades mediambientals, mentre que les socioeconòmiques passen a un segon pla. Això podria ser degut al fet que, en augmentar el nombre de clústers, les dades s'acoten massa, fent que aquelles característiques més influents en un nombre reduït de clústers perdin rellevància en la classificació.</p>
+                <p>Un exemple d'això seria la temperatura, que, independentment de les dades socioeconòmiques, manté una forta relació amb el consum d'electricitat. Això es deu al fet que factors com el clima influeixen directament en l'ús d'aparells com la calefacció o l'aire condicionat, fent que aquestes característiques continuïn sent determinants.</p>
             </div>
         </div>
-    </div>
-
-    <!-- Classification Results Section -->
-    <div class="button-container horizontal" id="classificationMisclassifiedButtonsContainer">
-        <!-- Buttons for selecting classification scaling types will be dynamically created -->
     </div>
 
     <div class="container">
@@ -312,15 +312,23 @@
         </div>
     </div>
 
+    <!-- Classification Results Section -->
+    <div class="button-container horizontal" id="classificationMisclassifiedButtonsContainer">
+        <!-- Buttons for selecting classification scaling types will be dynamically created -->
+    </div>
+
     <div class="container">
         <div class="column">
             <div class="content-text">
-                <p>Hello</p>
+                <p>Tot i haver obtingut bons resultats de precisió en la predicció de quin clúster correspon a un tipus de dada (al voltant del 91% en dades de test i 100% en dades de training), és important analitzar els casos en què aquesta predicció ha fallat. Ens interessa identificar si els errors són deguts al conjunt total de dades, al nombre de clústers o a altres factors que puguem observar. Per aquest motiu, s'ha generat una <strong>Confusion Matrix</strong> per analitzar el total de dades de <em>testing</em> que han estat classificades incorrectament.</p>
+                <p>A la diagonal de la <strong>Confusion Matrix</strong> es troben les dades classificades correctament, mentre que les altres caselles mostren els punts de dades que pertanyien a un clúster però han estat assignats a un altre. Inicialment, es volia comprovar si hi havia alguna relació entre el total de dades que pertanyien a un clúster i el nombre d'encerts. Aquesta relació, però, no s'ha confirmat del tot. Encara que en la <strong>Confusion Matrix</strong> pot semblar que alguns punts de dades es concentren en funció del nombre total, l'anàlisi del gràfic de la dreta revela que es tracta d'un altre tipus de relació.</p>
             </div>
         </div>
         <div class="column">
             <div class="content-text">
-                <p>Hello</p>
+                <p>En aquesta visualització amb <strong>t-SNE</strong>, s'han combinat les prediccions de dades amb la seva classificació real. Els punts incorrectament classificats s'han marcat amb una "X", la qual cosa ens ha permès identificar les relacions entre els punts classificats correctament i incorrectament.</p>
+                <p>S'observa que la distribució dels clústers al conjunt de dades no està del tot ben definida, ja que hi ha diversos punts d'altres clústers que interfereixen en zones on predomina un altre clúster. Aquest fenomen sembla ser la causa principal de la classificació incorrecta. En clústers més organitzats, aquest problema no es presenta. Per tant, podem concloure que aquest índex d'error podria ser degut a una falta de precisió en agrupar les dades, possiblement causada pel soroll present en el conjunt de dades al combinar-les amb altres datasets com les dades socioeconòmiques o medioambientals.</p>
+                <p>Evidentment, partint d'aquest mateix problema, en utilitzar 7 clústers amb l'escalat <strong>RobustScaling</strong>, aquest fenomen es veu encara més amplificat. Això provoca una disminució de la capacitat de predicció a mesura que s'afegeixen més clústers i, com a conseqüència, s'incrementa el soroll en el conjunt de dades.</p>
             </div>
         </div>
     </div>
