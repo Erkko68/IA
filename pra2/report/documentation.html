@@ -82,7 +82,6 @@
             flex: 1;
             display: flex;
             flex-direction: column; 
-            justify-content: center;
             box-sizing: border-box;
         }
 
@@ -432,18 +431,111 @@
     <div class="container">
         <div class="column">
             <div class="content-text">
-                <p>En aquest apartat es discutiran els diferents hiperparàmetres utilitzats en el GridSearch per cada model. </p>
-            </div>            
+                <p>
+                    En aquest apartat es discutiran els diferents hiperparàmetres utilitzats en el GridSearch per a cada model de regressió. Els models utilitzats inclouen <strong>DecisionTree</strong>, <strong>GradientBoosting</strong> i <strong>RandomForest</strong>. Per a tots aquests models, s'han realitzat proves amb una gamma d'hiperparàmetres per trobar la millor configuració possible. Tanmateix, com s'explicarà més endavant, els hiperparàmetres que no aportaven millores significatives han estat eliminats per optimitzar els temps de còmput i millorar la comprensió dels resultats.
+                </p>
+                <p>
+                    Els models de regressió intenten establir una relació entre les variables independents (com les característiques d'entrada) i la variable dependent (el resultat que es vol predir). A continuació, es detallen els resultats dels experiments amb cadascun d'aquests models, com també una explicació de la seva naturalesa i capacitats.
+                </p>
+                <p>
+                    Per al model de <strong>DecisionTree</strong>, s'han provat diverses combinacions de profunditat, variant entre 5 i 60. Tot i que en la gràfica final només es mostren els valors de profunditat entre 20 i 60, inicialment es van provar combinacions més àmplies per explorar millor el rang. A mesura que es reduïa el nombre d'hiperparàmetres per a la visualització, es va observar que un mínim de mostres per fulla de 15 i una profunditat màxima de 30 o 60 resultaven ser les millors opcions. Els valors intermitjos de profunditat van empitjorar la capacitat de regressió del model.
+                </p>
+                <p>
+                    Un <strong>DecisionTree</strong> és un model de regressió basat en una estructura arbòria on cada node intern representa una condició sobre una variable, i cada branca representa el resultat de l'avaluació d'aquesta condició. El model és capaç de modelar relacions no lineals entre les característiques d'entrada i la variable objectiu. Tot i això, tendeix a sobreajustar-se als valors específics de les dades d'entrenament si no es prenen mesures com la limitació de la profunditat o la reducció de mostres per fulla.
+                </p>
+                <p>
+                    En el cas del model de <strong>GradientBoosting</strong>, es van utilitzar dos hiperparàmetres principals: el ratio d'aprenentatge i la profunditat màxima. En contrast amb els models basats en arbre, la profunditat no va ser un factor significatiu, i els millors resultats es van obtenir amb un ratio d'aprenentatge més alt (0.2) i un nivell de profunditat baix (10). Tot i que es va provar amb més ratios com 0.01, per tal de reduir els temps de còmput aquest es va limitar als paràmetres que es mostren en la gràfica. També es va provar amb un mínim de mostres entre 100 i 300, però això no va millorar els resultats de manera notable, pel que s'hann eliminat per aquesta visualització.
+                </p>
+                
+            </div>
         </div>
         <div class="column">
-            <div class="column">
-                <div class="content-text">
-                    <p></p>
-                </div>            
+            <div class="content-text">
+                <p>
+                    El <strong>GradientBoosting</strong> és un model de regressió basat en el principi de l'augment de gradients. Funciona mitjançant la combinació de múltiples models febles (normalment arbres de decisió) per crear un model més potent. Cada arbre posterior corregeix els errors dels arbres anteriors mitjançant un procés d'optimització iterativa. Aquest model és molt potent per capturar relacions no lineals complexes, però pot ser sensible a sorolls en les dades si no es controla correctament el ritme d'aprenentatge.
+                </p>
+                <p>
+                    Finalment, el model de <strong>RandomForest</strong> va seguir un patró més lineal en funció de la profunditat i el nombre d'estimadors. Els millors resultats es van obtenir amb una profunditat de 30 i 200 estimadors. Malauradament, no es van poder provar combinacions més àmplies d'hiperparàmetres per limitacions de memòria RAM, ja que el model requereix una gran quantitat de recursos (Després de 12 hores processant va passar-se dels 32GB de RAM més d'un cop petant l'ordinador). Tot i així, el RandomForest va ser el model amb millor rendiment de predicció comparat amb els altres models.
+                </p>
+                <p>
+                    El <strong>RandomForest</strong> és un model basat en l'ensamblatge d'arbres de decisió. Utilitza múltiples arbres que es construeixen de manera independent a partir de submostres aleatòries de les dades d'entrenament. Els arbres es combinen per obtenir una predicció final mitjançant votació (en classificació) o mitjana (en regressió). Aquest model és robust davant el sobreajustament i, a més, pot gestionar molt bé grans quantitats de dades i característiques.
+                </p>
+                <p>
+                    En resum, els hiperparàmetres utilitzats van jugar un paper crucial en l'ajust de cada model. Per al DecisionTree, la profunditat i les mostres per fulla van ser determinants, mentre que en el GradientBoosting, el ratio d'aprenentatge va influir més en els resultats. El RandomForest va ser el millor en termes de rendiment predicció, tot i les limitacions de memòria.
+                </p>
             </div>
         </div>
     </div>
-    
+
+    <div class="container">
+        <div class="column">
+            <div class="title">DecisionTree</div>
+            <img width="600px" src="../plots/Regression/DecisionTree/learning_curve.png" alt="DecisionTree learning_curve">
+        </div>
+        <div class="column">
+            <div class="title">GradientBoosting</div>
+            <img width="600px" src="../plots/Regression/GradientBoosting/learning_curve.png" alt="GradientBoosting learning_curve">
+        </div>
+        <div class="column">
+            <div class="title">RandomForest</div>
+            <img width="600px" src="../plots/Regression/RandomForest/learning_curve.png" alt="RandomForest learning_curve">
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="column">
+            <div class="content-text">
+                <p><strong>Model Decision Tree:</strong></p>
+                <p>L'RMSE d'entrenament augmenta i l'RMSE de validació disminueix. Aquest patró pot indicar que el model d'arbre de decisions està regularitzant-se o es torna més senzill a mesura que es veu exposat a més dades. El model podria estar limitant la seva complexitat (per exemple, restringint la profunditat de l'arbre o el nombre de divisions) per evitar el sobreajustament. La disminució de l'RMSE de validació indica que el model millora en la seva capacitat de generalitzar a dades no vistes. Això suggereix que el model podria estar beneficiant-se de la regularització, millorant la seva capacitat de generalització.</p>
+        
+                <p><strong>Model de Gradient Boosting:</strong></p>
+                <p>En aquest cas, l'RMSE d'entrenament augmenta i l'RMSE de validació disminueix, un patró similar al de l'Arbre de Decisions. Aquest comportament podria indicar que el model està regularitzant-se més. El Gradient Boosting funciona ajustant-se iterativament a arbres de decisions i, amb més dades, podria estar aprenent una millor generalització, amb arbres més petits o menys rondes de reforç per evitar el sobreajustament. La disminució de l'RMSE de validació suggereix que el model està millorant la seva capacitat de generalitzar a dades noves.</p>
+        
+                <p><strong>Model de Random Forest:</strong></p>
+                <p>En aquest cas, l'RMSE d'entrenament es manté constant i l'RMSE de validació disminueix. Això suggereix que el model de Random Forest manté un rendiment constant en el conjunt d'entrenament, la qual cosa indica que no s'està sobreajustant ni infraajustant significativament. Els Random Forests tenen una bona capacitat per equilibrar el biaix i la variància, la qual cosa els fa robustos davant canvis en la mida del conjunt d'entrenament. La disminució de l'RMSE de validació mostra que, a mesura que s'introdueixen més dades, el model millora la seva capacitat de generalitzar.</p>    
+            </div>
+        </div>
+        <div class="column">
+            <div class="content-text">
+                <p><strong>Resum de tots els models:</strong></p>
+                <ol>
+                    <li><strong>Decision Tree:</strong> L'augment de l'RMSE d'entrenament i la disminució de l'RMSE de validació suggereixen que el model s'està simplificant o regularitzant a mesura que es proporcionen més dades, millorant la seva capacitat de generalitzar a dades no vistes. Això és un signe positiu que el model evita el sobreajustament.</li>
+                    <li><strong>Gradient Boosting:</strong> Igual que l'Arbre de Decisions, l'augment de l'RMSE d'entrenament i la disminució de l'RMSE de validació indiquen que la regularització (a través del procés de reforç) està millorant la generalització. El model podria estar sacrificant rendiment en l'entrenament per millorar el rendiment en validació, la qual cosa és un bon indicador d'aprenentatge robust.</li>
+                    <li><strong>Random Forest:</strong> L'RMSE d'entrenament constant i la disminució de l'RMSE de validació suggereixen que el model manté la una bona predicció mentre millora la seva capacitat de generalitzar a mesura que es proporciona més dades. El model es manté consistent tant en l'entrenament com en la validació.</li>
+                </ol>
+                <p><strong>Conclusió general:</strong></p>
+                <p>L'augment de l'RMSE d'entrenament (per a l'Arbre de Decisions i Gradient Boosting) mentre que l'RMSE de validació disminueix és un indicador que els models estan regularitzant-se i aprenent a generalitzar millor a mesura que veuen més dades. La manteniment de l'RMSE d'entrenament amb la disminució de l'RMSE de validació (per a Random Forest) suggereix que el model ja està ben regularitzat i continua millorant la seva capacitat de generalitzar. En tots els casos, la disminució de l'RMSE de validació és un signe positiu, ja que mostra que els models estan millorant el seu rendiment en dades no vistes, que és l'objectiu final. Aquest comportament és típic quan els models estan reduint el sobreajustament a mesura que es proporciona més informació, i és un bon signe de millora en les capacitats de generalització. En general podem afirmar que el Random Forest ha aconseguit uns millors resultats respecte la resta de models.</p>    
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="column">
+            <div class="title">DecisionTree</div>
+            <img width="600px" src="../plots/Regression/DecisionTree/permutation_importances.png" alt="DecisionTree permutation_importances">
+        </div>
+        <div class="column">
+            <div class="title">GradientBoosting</div>
+            <img width="600px" src="../plots/Regression/GradientBoosting/permutation_importances.png" alt="GradientBoosting permutation_importances">
+        </div>
+        <div class="column">
+            <div class="title">RandomForest</div>
+            <img width="600px" src="../plots/Regression/RandomForest/permutation_importances.png" alt="RandomForest permutation_importances">
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="column">
+            <div class="content-text">
+                <p>En aquest apartat es mostren les gràfiques de la importància de les característiques utilitzades pels diferents models, es tindrien que haver escalat de forma logarítmica per facilitar les visualitzacions, però per evitar tenir que estar un dia sencer reentrenant els models s'han mantigut aixi. </p>
+            </div>
+        </div>
+        <div class="column">
+            <div class="content-text">
+                <p></p>
+            </div>
+        </div>
+    </div>
     
     <script>
         const clusteringScalingOptions = {
