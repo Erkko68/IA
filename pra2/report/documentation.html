@@ -512,6 +512,35 @@
     <div class="container">
         <div class="column">
             <div class="title">DecisionTree</div>
+            <img width="600px" src="../plots/Regression/DecisionTree/residual_plot.png" alt="DecisionTree residual_plot">
+        </div>
+        <div class="column">
+            <div class="title">GradientBoosting</div>
+            <img width="600px" src="../plots/Regression/GradientBoosting/residual_plot.png" alt="GradientBoosting residual_plot">
+        </div>
+        <div class="column">
+            <div class="title">RandomForest</div>
+            <img width="600px" src="../plots/Regression/RandomForest/residual_plot.png" alt="RandomForest residual_plot">
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="column">
+            <div class="content-text">
+                <p>Una bona forma de mesurar la precisió del model és mitjançant la ResidualPlot, que mostra la diferència entre els valors reals i els predits (els residus). Quan els punts estan més a prop de l’eix horitzontal, el model té una millor capacitat predictiva. Però a mesura que l’horitzó de predicció s’allarga, els residus tendiran a augmentar, la qual cosa indica que el model es desvia més dels valors reals a mesura que s’allunya del moment actual.</p>
+            </div>
+        </div>
+        <div class="column">
+            <div class="content-text">
+                <p>En les prediccions a llarg termini, és comú que els models de sèries temporals experimentin un augment de la incertesa, ja que els patrons es basen en extrapolacions i petits errors poden acumular-se. A mesura que augmenta el nombre de prediccions, els errors també poden créixer, ja que el model s’ha d’enfrontar a la dificultat de predir patrons futurs basats en dades passades. Aquesta incertesa s'intensifica a mesura que el model intenta predir a horitzons temporals més llargs.</p>
+                <p>Observem com el model amb millors resultats és el RandomForest encara que com a la resta de models a mesura que augmentem els valors predits, cada vegada s'allunyen més dels valors reals.</p>
+            </div>
+        </div>
+    </div>    
+
+    <div class="container">
+        <div class="column">
+            <div class="title">DecisionTree</div>
             <img width="600px" src="../plots/Regression/DecisionTree/permutation_importances.png" alt="DecisionTree permutation_importances">
         </div>
         <div class="column">
@@ -527,12 +556,21 @@
     <div class="container">
         <div class="column">
             <div class="content-text">
-                <p>En aquest apartat es mostren les gràfiques de la importància de les característiques utilitzades pels diferents models, es tindrien que haver escalat de forma logarítmica per facilitar les visualitzacions, però per evitar tenir que estar un dia sencer reentrenant els models s'han mantigut aixi. </p>
+                <p>En aquest apartat es mostren les gràfiques de la importància de les característiques utilitzades pels diferents models. Es tindrien que haver escalat de forma logarítmica per facilitar les visualitzacions, però per evitar tenir que estar un dia sencer reentrenant els models s'han mantingut així.</p>
+                <p>En tots tres es pot observar com els paràmetres més influents s'han centrat en el nombre de contractes inclosos en el consum, la temperatura i el nombre d'arbres, entre altres. Com és d'esperar, el nombre de contractes associats al consum permet als models identificar els patrons necessaris per predir el consum elèctric.</p>
+                <p>Curiosament, el model de Decision Tree és l'únic que s'ha centrat en el nombre de cases amb bastanta diferència respecte a la resta de característiques. També cal recalcar com en els models Gradient Boosting i Random Forest ens trobem amb característiques amb importància negativa.</p>
+                <p>Que una característica esdevingui negativa no implica necessàriament que sigui dolenta o perjudicial, sinó que en aquest context del dataset no és beneficiosa. És possible que trenqui relacions o que simplement no ajudi al model en concret. Per exemple, en el Decision Tree no ens apareixen característiques amb importància negativa.</p>
             </div>
         </div>
         <div class="column">
             <div class="content-text">
-                <p></p>
+                <p>Conèixer quines característiques són beneficioses per als models és crucial, ja que ens permet centrar els esforços en dades rellevants, eliminant característiques que podrien confondre el model o no aportar valor. Això ajuda a millorar l'eficiència computacional i pot augmentar la precisió del model.</p>
+                <p>Basats en aquests resultats, els pròxims passos per optimitzar els models podrien incloure:</p>
+                <ul>
+                    <li>Experimentar amb tècniques de selecció de característiques, com ara l'eliminació recursiva de característiques (RFE) o models de regularització com Lasso.</li>
+                    <li>Reentrenar els models amb subsets de dades seleccionades per confirmar l'impacte de cada característica en el rendiment global.</li>
+                </ul>
+                <p>Es va intentar realitzar l'eliminació recursiva de característiques (RFE) amb el model RandomForest pero resultava massa intensiva i requeria massa hores de cómput. Per aquest motiu es va probar directament utilitzar un subset amb les característiques més importants.</p>
             </div>
         </div>
     </div>
