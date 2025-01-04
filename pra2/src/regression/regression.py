@@ -82,7 +82,7 @@ numerical_columns = X.select_dtypes(include=['number']).columns
 # 5. Define Preprocessing Steps
 # ==================================
 # Preprocessing for numerical data: scaling
-numerical_transformer = MinMaxScaler()
+numerical_transformer = StandardScaler()
 
 # Preprocessing for categorical data: one-hot encoding
 categorical_transformer = OneHotEncoder(handle_unknown='ignore')
@@ -100,9 +100,9 @@ preprocessor = ColumnTransformer(
 # ==================================
 
 models = {
-    #"DecisionTree": DecisionTreeRegressor(),
+    "DecisionTree": DecisionTreeRegressor(),
     "GradientBoosting": GradientBoostingRegressor(),
-    #"RandomForest": RandomForestRegressor(),
+    "RandomForest": RandomForestRegressor(),
 }
 
 hyperparameter_ranges = {
@@ -249,6 +249,7 @@ def evaluate_regression_model(
     plt.grid()
     plt.savefig(f"{PLOT_DIR}{model_name}/cv_performance.png", format="png", dpi=300)
 
+'''
 for model_name, model in models.items():
     # Train and save the best model
     evaluate_regression_model(
@@ -262,6 +263,7 @@ for model_name, model in models.items():
         X_test=X_test,
         y_test=y_test
     )
+'''
 
 # ==================================
 # 9. Plot Regression Results

@@ -81,6 +81,7 @@
         .column {
             flex: 1;
             display: flex;
+            flex-direction: column; 
             justify-content: center;
             box-sizing: border-box;
         }
@@ -143,7 +144,7 @@
     <div class="container">
         <div class="column"> 
             <div class="content-text">
-                <p>Després de carregar les dades i convertirles al dataframe de polars, per tal de garantir un anàlisi precis en el temps, convertint els registres de temps a la zona horària local ("Europa/Madrid") i extraient els atributs corresponents de <code>hora</code> i <code>data</code>. Aquesta informació temporal és essencial per identificar patrons diaris, que són fonamentals per a les tècniques de clustering basades en comportaments temporals.</p>
+                <p>En aquestat apartat s'analitzaran el conjunt de dades per identificar els patrons de consum elèctric. Després de carregar les dades de consum i convertirles al dataframe de polars, per tal de garantir un anàlisi precis en el temps, convertint els registres de temps a la zona horària local ("Europa/Madrid") i extraient els atributs corresponents de <code>hora</code> i <code>data</code>. Aquesta informació temporal és essencial per identificar patrons diaris, que són fonamentals per a les tècniques de clustering basades en comportaments temporals.</p>
                 <p>A continuació, les dades es classifiquen per <code>codi_postal</code> i <code>localtime</code> per facilitar les operacions de sèrie temporal i el càlcul de mètriques agregades. Es calculen estadístiques mòbils, incloent-hi la mitjana mòbil de 48 hores, la desviació estàndard i el 10è percentil en una finestra de 168 hores. Aquestes estadístiques ofereixen una perspectiva sobre les tendències locals de consum i ajuden a identificar variacions anòmales en el consum que podrien influir en la creació de clústers.</p>
                 <p>Les mètriques calculades s’integren al conjunt de dades original i es normalitzen utilitzant valors Z (Z-normalització), cosa que permet que els valors de consum es comparin de manera uniforme independentment de les diferències de magnitud entre codis postals, aquest aspecte é smolt important a l'hora de realitzar clustering amb la tècnica de K-means ja que aquest es veu molt influenciat per dades anòmales amb valors molt grans o molt petits. Es filtren els valors anòmals eliminant els registres amb consum zero (ja que no aporten informació rellevan) i aplicant llindars de normalització Z i quantils mòbils per eliminar soroll i destacar patrons significatius.</p>        
             </div>
@@ -344,16 +345,106 @@
     <div class="container">
         <div class="column">
             <div class="content-text">
-                <p>Hello</p>
-            </div>
+                <p>En aquest apartat es descriu el procés d'anàlisi i modelatge de dades per a predir el consum elèctric, utilitzant diferents models de regressió. Els conjunts de dades inclouen dades horàries de consum elèctric, condicions meteorològiques (com la temperatura i humitat), dades socioeconòmiques per entendre les característiques demogràfiques i dades cadastrals amb informació sobre els edificis, com ara el nombre d'habitatges i les seves condicions.</p>
+                <p>El primer pas és la integració i el preprocessament d'aquestes dades. Les dades de consum s'enriqueixen amb informació meteorològica, socioeconòmica i cadastral, integrant-les amb el codi postal i temps. A més, es generen noves característiques derivades, com el mes i el dia de la setmana, per capturar patrons temporals. Aquest conjunt de dades combinat es transforma en un format adequat per a l'entrenament i l'avaluació de models de regressió.</p>
+                <p>Abans de l'entrenament, es defineixen les característiques d'entrada i la variable objectiu. Les columnes categòriques es processen mitjançant codificació <strong>one-hot</strong>, mentre que les columnes numèriques es normalitzen amb l'escalador <strong>StandardScaler</strong> per assegurar que totes les variables tinguin la mateixa escala. Aquesta normalització és crucial per millorar la precisió dels models de regressió.</p>
+            </div>            
         </div>
         <div class="column">
             <div class="content-text">
-                <p>Hello</p>
+                <p>Per a la modelització, s'exploren diferents algorismes com: <strong>Gradient Boosting Regressor</strong>, <strong>Decision Tree Regressor</strong> i <strong>Random Forest Regressor</strong>. Els hiperparàmetres de cada model es seleccionen mitjançant cerca exhaustiva amb <strong>Cross Validation</strong>, optimitzant mètriques com l'error quadràtic mitjà (RMSE). Es crea un pipeline que combina els passos de preprocessament i modelatge, assegurant que tot el procés sigui consistent i replicable.</p>
+                <p>L'avaluació dels models inclou diverses tècniques, com ara la importància de les característiques per comprendre la rellevància de les diferents variables en les prediccions. Es realitzen visualitzacions per interpretar millor els resultats, incloent-hi gràfics de residus, corbes d'aprenentatge i mapes de calor que mostren els resultats de la cerca d'hiperparàmetres. A més, es generen gràfics específics per als errors residuals i per l'impacte de les característiques en els models basats en arbres.</p>
+                <p>Finalment, els millors models entrenats es guarden per a ús futur, i es documenten els resultats obtinguts per facilitar la seva interpretació. Aquest enfocament sistemàtic permet comprendre millor els factors que influeixen en el consum elèctric i proporciona eines per fer prediccions més precises en escenaris pràctics com serien els codis postals .</p>          
             </div>
         </div>
     </div>
 
+    <!-- Load curve prediction scroll -->
+    <div class="container">
+        <div class="column">
+            <div class="title">DecisionTree</div>
+            <iframe id="pdf1" src="../plots/PostalCodesPredictions/DecisionTree/25001.pdf#page=1" width="600" height="300"></iframe>
+        </div>
+        <div class="column">
+            <div class="title">GradientBoosting</div>
+            <iframe id="pdf2" src="../plots/PostalCodesPredictions/GradientBoosting/25001.pdf#page=1" width="600" height="300"></iframe>
+        </div>
+        <div class="column">
+            <div class="title">RandomForest</div>
+            <iframe id="pdf3" src="../plots/PostalCodesPredictions/RandomForest/25001.pdf#page=1" width="600" height="300"></iframe>
+        </div>
+    </div>
+
+    <button onclick="increasePage()">Next Page</button>
+    <div>
+        <label for="postalCodeSelect">Choose Postal Code:</label>
+        <select id="postalCodeSelect" onchange="updatePostalCode()">
+            <option value="25001">25001</option>
+            <option value="25002">25002</option>
+            <option value="25003">25003</option>
+            <option value="25004">25004</option>
+            <option value="25005">25005</option>
+            <option value="25006">25006</option>
+            <option value="25007">25007</option>
+            <option value="25008">25008</option>
+            <option value="25110">25110</option>
+            <option value="25111">25111</option>
+            <option value="25113">25113</option>
+            <option value="25190">25190</option>
+            <option value="25191">25191</option>
+            <option value="25192">25192</option>
+            <option value="25193">25193</option>
+        </select>
+    </div>
+
+    <div class="container">
+        <div class="column">
+            <div class="content-text">
+                <p>En les tres gràfiques superiors es mostren els resultats de la predicció per a cada tipus de model de regressió. Per a cada model, s'han realitzat prediccions de diferents codis postals, amb un total de 10 prediccions durant un període de 96 hores.</p>
+                <p>Aquestes prediccions s'han realitzat en un conjunt de dades específic per analitzar com els models responen davant diferents patrons de càrrega elèctrica. Els resultats obtinguts ens han permès avaluar quins models són més eficaços en condicions concretes.</p>
+                <p>A més, s'ha observat que la precisió dels models depèn en gran mesura de la tipologia de la càrrega elèctrica, si segueix un patró previsible o si és més erràtica i caòtica. Els models han estat provats sota diverses condicions per assegurar la seva robustesa.</p>
+            </div>            
+        </div>
+        <div class="column">
+            <div class="content-text">
+                <p>Analitzant les gràfiques generades, observem que en la majoria de casos tots tres models són capaços d'ajustar-se a la càrrega elèctrica real amb petites variacions en alguns pics. En general, els models ronden millor quan les tendències elèctriques segueixen un patró més específic (per exemple, el codi postal 25001).</p>
+                <p>En canvi, amb càrregues elèctriques més caòtiques i variades (com el codi postal 25193), els models de <strong>DecisionTree</strong> i <strong>GradientBoosting</strong> no aconsegueixen ajustar-se completament. Una observació important és que el model de <strong>DecisionTree</strong> tendeix a sobreestimar la càrrega elèctrica, mentre que el model de <strong>GradientBoosting</strong> sovint la subestima.</p>
+                <p>El model que ha demostrat millor capacitat d'ajustar-se a la corba elèctrica sense grans complicacions ha estat el <strong>RandomForest</strong>, tot i que els tres models han aportat bons resultats. Això ens suggereix que, tot i que tots els models tenen un rendiment acceptable, el <strong>RandomForest</strong> és el més robust davant diferents tipus de variabilitat en les dades.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="column">
+            <div class="title">DecisionTree</div>
+            <img width="600px" src="../plots/Regression/DecisionTree/grid_search_heatmap.png" alt="DecisionTree GridSearch">
+        </div>
+        <div class="column">
+            <div class="title">GradientBoosting</div>
+            <img width="600px" src="../plots/Regression/GradientBoosting/grid_search_heatmap.png" alt="GradientBoosting GridSearch">
+        </div>
+        <div class="column">
+            <div class="title">RandomForest</div>
+            <img width="600px" src="../plots/Regression/RandomForest/grid_search_heatmap.png" alt="RandomForest GridSearch">
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="column">
+            <div class="content-text">
+                <p>En aquest apartat es discutiran els diferents hiperparàmetres utilitzats en el GridSearch per cada model. </p>
+            </div>            
+        </div>
+        <div class="column">
+            <div class="column">
+                <div class="content-text">
+                    <p></p>
+                </div>            
+            </div>
+        </div>
+    </div>
+    
+    
     <script>
         const clusteringScalingOptions = {
             "MaxAbsScaling": "MaxAbsScaling",
@@ -393,6 +484,30 @@
         let currentClassificationType = Object.keys(classificationScalingOptions)[0];
         let currentImageIndex = 0;
         let currentPCA = 2; // Default to PCA level 2
+
+        let currentPage = 1;  // Initial page
+        let selectedPostalCode = "25001"; // Default postal code
+
+        // Sync all iframes when the page changes
+        function syncIframes() {
+            const pageParam = `#page=${currentPage}`;
+
+            document.getElementById("pdf1").src = `../plots/PostalCodesPredictions/DecisionTree/${selectedPostalCode}.pdf${pageParam}`;
+            document.getElementById("pdf2").src = `../plots/PostalCodesPredictions/GradientBoosting/${selectedPostalCode}.pdf${pageParam}`;
+            document.getElementById("pdf3").src = `../plots/PostalCodesPredictions/RandomForest/${selectedPostalCode}.pdf${pageParam}`;
+        }
+
+        // Increase page number, wrap around using modulus 10
+        function increasePage() {
+            currentPage = (currentPage % 10) + 1; // Page number increases, modulus 10, wraps to 1 after 10
+            syncIframes(); // Sync all iframes
+        }
+
+        // Function to update the postal code based on the select box
+        function updatePostalCode() {
+            selectedPostalCode = document.getElementById("postalCodeSelect").value;
+            syncIframes();
+        }
     
         // Function to create a button
         function createButton(text, action) {
